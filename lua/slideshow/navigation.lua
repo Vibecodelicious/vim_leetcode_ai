@@ -90,7 +90,24 @@ function Navigator:goto_slide(n)
   return self.slides[self.index]
 end
 
---- Parse a navigation command from stdin
+--- Parse a single character command
+---@param char string Single character input
+---@return string|nil command Command name or nil if invalid
+---@return number|nil arg Argument for goto command
+function M.parse_char(char)
+  if char == 'n' or char == 'j' or char == ' ' then
+    return 'next', nil
+  elseif char == 'p' or char == 'k' then
+    return 'prev', nil
+  elseif char == 'q' then
+    return 'quit', nil
+  elseif char:match('^%d$') then
+    return 'goto', tonumber(char)
+  end
+  return nil, nil
+end
+
+--- Parse a navigation command from stdin (for line-based input)
 ---@param line string Input line
 ---@return string|nil command Command name or nil if invalid
 ---@return number|nil arg Argument for goto command
@@ -115,17 +132,35 @@ function M.parse_command(line)
   return nil, nil
 end
 
---- Read commands from stdin in a loop
---- This is the main input loop for the slideshow
+--- Set terminal to raw mode for single character input
+local function set_raw_mode()
+  os.execute('stty raw -echo 2>/dev/null')
+end
+
+--- Restore terminal to normal mode
+local function restore_terminal()
+  os.execute('stty cooked echo 2>/dev/null')
+end
+
+--- Read single character commands from stdin
+--- Uses raw terminal mode for immediate response
 ---@param callback function(cmd: string, arg: number|nil): boolean Callback for each command. Return false to stop.
 function M.read_commands(callback)
+  set_raw_mode()
+
   while true do
-    local line = io.read('*l')
-    if not line then
+    local char = io.read(1)
+    if not char then
       break -- EOF
     end
 
-    local cmd, arg = M.parse_command(line)
+    -- Handle Ctrl-C
+    if char == '\003' then
+      restore_terminal()
+      os.exit(0)
+    end
+
+    local cmd, arg = M.parse_char(char)
     if cmd then
       local continue = callback(cmd, arg)
       if not continue then
@@ -133,6 +168,8 @@ function M.read_commands(callback)
       end
     end
   end
+
+  restore_terminal()
 end
 
 return M
