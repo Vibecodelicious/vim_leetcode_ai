@@ -5,8 +5,9 @@ local M = {}
 -- Find the plugin directory from this file's location
 local function get_plugin_dir()
   local source = debug.getinfo(1, 'S').source:sub(2) -- Remove leading @
-  -- source is .../lua/vim_leetcode_ai/config.lua, we want ...
-  return source:match('(.*/)[^/]+/[^/]+/[^/]+$') or '.'
+  -- Get absolute path and go up 3 levels: config.lua -> vim_leetcode_ai -> lua -> plugin_root
+  local abs_path = vim.fn.fnamemodify(source, ':p:h:h:h')
+  return abs_path .. '/'
 end
 
 local plugin_dir = get_plugin_dir()
