@@ -171,6 +171,10 @@ function M.launch_in_tool_pane(cmd)
     slideshow_active = true, -- Assume slideshow if launching program
   })
 
+  -- Setup stale detection for code buffer modifications
+  local highlight = require('vim_leetcode_ai.highlight')
+  highlight.setup_stale_detection()
+
   -- Restore original window
   vim.api.nvim_set_current_win(current_win)
 
