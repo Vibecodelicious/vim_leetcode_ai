@@ -169,6 +169,7 @@ function M.launch_in_tool_pane(cmd)
     tool_terminal_job = job_id,
     tool_terminal_buf = buf,
     tool_active = true,
+    tool_stale = false, -- Clear stale flag for fresh tool
   })
 
   -- Setup stale detection for code buffer modifications
