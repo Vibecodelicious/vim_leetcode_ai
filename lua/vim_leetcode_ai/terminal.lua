@@ -152,7 +152,7 @@ function M.launch_in_tool_pane(cmd)
       -- Tool program exited - could show status
       state.update({
         tool_terminal_job = nil,
-        slideshow_active = false,
+        tool_active = false,
       })
     end,
   })
@@ -168,7 +168,7 @@ function M.launch_in_tool_pane(cmd)
   state.update({
     tool_terminal_job = job_id,
     tool_terminal_buf = buf,
-    slideshow_active = true, -- Assume slideshow if launching program
+    tool_active = true,
   })
 
   -- Setup stale detection for code buffer modifications

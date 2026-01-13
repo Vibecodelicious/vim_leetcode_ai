@@ -176,28 +176,28 @@ describe('highlight', function()
   describe('mark_stale()', function()
     it('should update state to indicate stale highlights', function()
       -- Arrange
-      state.update({ slideshow_stale = false })
+      state.update({ tool_stale = false })
 
       -- Act
       highlight.mark_stale()
 
       -- Assert
       local s = state.get()
-      assert.is_true(s.slideshow_stale)
+      assert.is_true(s.tool_stale)
     end)
   end)
 
   describe('clear_stale()', function()
     it('should clear stale indicator', function()
       -- Arrange
-      state.update({ slideshow_stale = true })
+      state.update({ tool_stale = true })
 
       -- Act
       highlight.clear_stale()
 
       -- Assert
       local s = state.get()
-      assert.is_false(s.slideshow_stale)
+      assert.is_false(s.tool_stale)
     end)
   end)
 end)

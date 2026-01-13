@@ -30,9 +30,12 @@ There is a slideshow skill at ]] .. plugin_dir .. [[skills/slideshow.md that you
 Plugin scripts (use absolute paths):
 - ]] .. plugin_dir .. [[scripts/get_code_file.sh - Get the code buffer contents
 - ]] .. plugin_dir .. [[scripts/launch_slideshow.sh <file> - Launch a slideshow
+- ]] .. plugin_dir .. [[scripts/run_tool.sh <command> [args...] - Run any program in the tool pane
 
-Temp directory for slideshow files: ]] .. temp_dir .. [[
-Write slideshow JSON files there (e.g., ]] .. temp_dir .. [[/slideshow.json)]]
+The tool pane is a terminal window that displays alongside the code editor. You can run any interactive program there - custom visualizations, animations, or other tools. The program will have access to $NVIM for RPC communication back to Neovim.
+
+Temp directory for files: ]] .. temp_dir .. [[
+Write temporary files there (e.g., ]] .. temp_dir .. [[/slideshow.json)]]
 
 local defaults = {
   -- Command to run the AI agent (required)

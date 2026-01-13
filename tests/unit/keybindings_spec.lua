@@ -36,7 +36,7 @@ describe('keybindings', function()
     it('should do nothing when slideshow is not active', function()
       -- Arrange
       state.update({
-        slideshow_active = false,
+        tool_active = false,
         tool_terminal_job = 123,
       })
 
@@ -52,7 +52,7 @@ describe('keybindings', function()
 
       -- Arrange
       state.update({
-        slideshow_active = true,
+        tool_active = true,
         tool_terminal_job = nil, -- no actual job
       })
 
@@ -71,28 +71,28 @@ describe('keybindings', function()
 
   describe('navigation commands', function()
     it('should support next command', function()
-      state.update({ slideshow_active = true })
+      state.update({ tool_active = true })
       assert.has_no.errors(function()
         keybindings.send_to_slideshow('next')
       end)
     end)
 
     it('should support prev command', function()
-      state.update({ slideshow_active = true })
+      state.update({ tool_active = true })
       assert.has_no.errors(function()
         keybindings.send_to_slideshow('prev')
       end)
     end)
 
     it('should support goto command', function()
-      state.update({ slideshow_active = true })
+      state.update({ tool_active = true })
       assert.has_no.errors(function()
         keybindings.send_to_slideshow('goto 3')
       end)
     end)
 
     it('should support quit command', function()
-      state.update({ slideshow_active = true })
+      state.update({ tool_active = true })
       assert.has_no.errors(function()
         keybindings.send_to_slideshow('quit')
       end)

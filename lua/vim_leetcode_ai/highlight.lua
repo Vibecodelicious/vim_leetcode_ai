@@ -33,7 +33,7 @@ function M.set_lines(lines)
   local total_lines = vim.api.nvim_buf_line_count(s.code_buffer)
 
   -- Determine highlight group based on stale state
-  local hl_group = s.slideshow_stale and 'VimLeetcodeAIStale' or 'VimLeetcodeAIHighlight'
+  local hl_group = s.tool_stale and 'VimLeetcodeAIStale' or 'VimLeetcodeAIHighlight'
 
   local valid_lines = {}
   local invalid_lines = {}
@@ -122,7 +122,7 @@ end
 
 --- Mark highlights as stale (code was modified)
 function M.mark_stale()
-  state.update({ slideshow_stale = true })
+  state.update({ tool_stale = true })
 
   -- Re-apply highlights with stale coloring
   local s = state.get()
@@ -143,12 +143,12 @@ function M.mark_stale()
   end
 
   -- Notify user
-  vim.notify('Slideshow highlights are stale (code was modified). Refresh the slideshow to update.', vim.log.levels.WARN)
+  vim.notify('Highlights are stale (code was modified). Refresh the tool to update.', vim.log.levels.WARN)
 end
 
 --- Clear stale indicator
 function M.clear_stale()
-  state.update({ slideshow_stale = false })
+  state.update({ tool_stale = false })
 end
 
 --- Setup autocmd to detect code buffer modifications (FR-029)
@@ -167,7 +167,7 @@ function M.setup_stale_detection()
     buffer = s.code_buffer,
     callback = function()
       local current_state = state.get()
-      if current_state.slideshow_active and not current_state.slideshow_stale then
+      if current_state.tool_active and not current_state.tool_stale then
         M.mark_stale()
       end
     end,

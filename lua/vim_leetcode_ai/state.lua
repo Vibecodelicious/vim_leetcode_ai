@@ -13,8 +13,8 @@ local M = {}
 ---@field tool_window number|nil Window ID of the tool output pane
 ---@field ai_window number|nil Window ID of the AI terminal pane
 ---@field highlight_ns number Namespace ID for line highlights
----@field slideshow_active boolean Whether a slideshow is currently active
----@field slideshow_stale boolean Whether the slideshow is stale (code modified)
+---@field tool_active boolean Whether a tool is currently active in the tool pane
+---@field tool_stale boolean Whether the tool output is stale (code modified)
 ---@field current_slide number|nil Current slide index (1-indexed)
 ---@field total_slides number|nil Total number of slides
 
@@ -30,8 +30,8 @@ local state = {
   tool_window = nil,
   ai_window = nil,
   highlight_ns = vim.api.nvim_create_namespace('vim_leetcode_ai_highlight'),
-  slideshow_active = false,
-  slideshow_stale = false,
+  tool_active = false,
+  tool_stale = false,
   current_slide = nil,
   total_slides = nil,
 }
@@ -50,7 +50,7 @@ function M.update(updates)
     'layout_open', 'ai_terminal_job', 'ai_terminal_buf',
     'tool_terminal_job', 'tool_terminal_buf', 'code_buffer',
     'code_window', 'tool_window', 'ai_window', 'highlight_ns',
-    'slideshow_active', 'slideshow_stale', 'current_slide', 'total_slides',
+    'tool_active', 'tool_stale', 'current_slide', 'total_slides',
   }
   local valid_set = {}
   for _, k in ipairs(valid_keys) do
@@ -75,8 +75,8 @@ function M.reset()
   state.code_window = nil
   state.tool_window = nil
   state.ai_window = nil
-  state.slideshow_active = false
-  state.slideshow_stale = false
+  state.tool_active = false
+  state.tool_stale = false
   state.current_slide = nil
   state.total_slides = nil
 end
