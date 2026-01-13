@@ -9,15 +9,28 @@ local terminal = require('vim_leetcode_ai.terminal')
 local state = require('vim_leetcode_ai.state')
 local keybindings = require('vim_leetcode_ai.keybindings')
 
+-- Track if setup has been called
+local setup_called = false
+
+--- Ensure plugin is initialized (auto-setup with defaults if needed)
+local function ensure_setup()
+  if not setup_called then
+    M.setup({})
+  end
+end
+
 --- Setup the plugin with user configuration
 ---@param opts table|nil User configuration options
 function M.setup(opts)
   config.setup(opts)
   keybindings.setup()
+  setup_called = true
 end
 
 --- Open the AI assistant layout
 function M.open()
+  ensure_setup()
+
   if state.get().layout_open then
     vim.notify('AI assistant is already open', vim.log.levels.WARN)
     return
@@ -28,6 +41,8 @@ end
 
 --- Close the AI assistant layout
 function M.close()
+  ensure_setup()
+
   if not state.get().layout_open then
     vim.notify('AI assistant is not open', vim.log.levels.WARN)
     return
@@ -38,6 +53,7 @@ end
 
 --- Restart the AI agent
 function M.restart()
+  ensure_setup()
   terminal.restart()
 end
 
