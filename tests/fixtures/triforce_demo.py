@@ -253,8 +253,8 @@ def rgb_to_ansi(r, g, b):
     return f"{int(r*255)};{int(g*255)};{int(b*255)}"
 
 # Background color for stars/space
-BG_SPACE = (0.02, 0.02, 0.06)
-BG_SPACE_ANSI = "5;5;15"  # Pre-computed ANSI string
+BG_SPACE = (0.0, 0.0, 0.25)  # Navy blue
+BG_SPACE_ANSI = "0;0;64"  # Pre-computed ANSI string
 
 # ============================================================================
 # PIXEL SAMPLING
