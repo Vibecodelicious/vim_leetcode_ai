@@ -98,15 +98,15 @@ function M.parse_command(line)
   -- Trim whitespace
   line = line:match('^%s*(.-)%s*$')
 
-  if line == 'next' then
+  if line == 'next' or line == 'n' then
     return 'next', nil
-  elseif line == 'prev' then
+  elseif line == 'prev' or line == 'p' then
     return 'prev', nil
-  elseif line == 'quit' then
+  elseif line == 'quit' or line == 'q' then
     return 'quit', nil
   else
-    -- Check for 'goto N' pattern
-    local n = line:match('^goto%s+(%d+)$')
+    -- Check for 'goto N' or just a number
+    local n = line:match('^goto%s+(%d+)$') or line:match('^(%d+)$')
     if n then
       return 'goto', tonumber(n)
     end

@@ -37,9 +37,9 @@ function M.render_slide(content, current, total, at_end)
   -- Display navigation indicator
   local indicator
   if at_end then
-    indicator = string.format('End of slideshow (%d/%d) - [s to go back, q to quit', total, total)
+    indicator = string.format('End of slideshow (%d/%d) - p=back, q=quit', total, total)
   else
-    indicator = string.format('Slide %d/%d - ]s next, [s prev, q quit', current, total)
+    indicator = string.format('Slide %d/%d - n=next, p=prev, q=quit', current, total)
   end
   io.write(indicator)
   io.write('\n')
@@ -60,7 +60,7 @@ function M.show_end_indicator(current, total)
   io.write('\n')
   io.write('────────────────────────────────────────\n')
   io.write(string.format('  End of slideshow (%d/%d)\n', total, total))
-  io.write('  Press [s to go back, q to quit\n')
+  io.write('  p=back, q=quit\n')
   io.write('────────────────────────────────────────\n')
   io.flush()
 end

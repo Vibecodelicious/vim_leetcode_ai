@@ -42,9 +42,10 @@ Use this when the user asks you to explain code, debug issues, or walk through a
 ## User Navigation
 
 The user types in the tool pane:
-- `next` / `prev` - Navigate slides
-- `goto N` - Jump to slide N
-- `quit` - Exit
+- `n` or `next` - Next slide
+- `p` or `prev` - Previous slide
+- `q` or `quit` - Exit
+- `3` or `goto 3` - Jump to slide 3
 
 ## Example Flow
 
