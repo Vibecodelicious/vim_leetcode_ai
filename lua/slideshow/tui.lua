@@ -22,8 +22,17 @@ end
 ---@param current number Current slide index (1-indexed)
 ---@param total number Total number of slides
 ---@param at_end boolean Whether we're showing end-of-slideshow indicator
-function M.render_slide(content, current, total, at_end)
+---@param stale boolean|nil Whether the content is stale (code was modified)
+function M.render_slide(content, current, total, at_end, stale)
   M.clear()
+
+  -- Show stale warning banner if needed
+  if stale then
+    io.write('\027[43;30m')  -- Yellow background, black text
+    io.write(' ⚠ CODE MODIFIED - Line highlights may be incorrect ')
+    io.write('\027[0m')  -- Reset colors
+    io.write('\r\n\r\n')
+  end
 
   -- Display slide content (convert \n to \r\n for raw mode)
   local formatted_content = content:gsub('\n', '\r\n')

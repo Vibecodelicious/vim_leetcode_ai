@@ -85,4 +85,25 @@ function RpcClient:notify_slide_change(current, total)
   )
 end
 
+--- Check if parent indicates stale status
+---@return boolean stale True if tool is marked as stale
+function RpcClient:is_stale()
+  if not self.channel then
+    return false
+  end
+
+  local ok, result = pcall(
+    vim.rpcrequest,
+    self.channel,
+    'nvim_exec_lua',
+    [[return require('vim_leetcode_ai.state').get().tool_stale]],
+    {}
+  )
+
+  if ok then
+    return result == true
+  end
+  return false
+end
+
 return M

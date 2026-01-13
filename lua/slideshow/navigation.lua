@@ -142,7 +142,7 @@ local function restore_terminal()
   os.execute('stty cooked echo 2>/dev/null')
 end
 
---- Read single character commands from stdin
+--- Read single character commands from stdin (blocking version)
 --- Uses raw terminal mode for immediate response
 ---@param callback function(cmd: string, arg: number|nil): boolean Callback for each command. Return false to stop.
 function M.read_commands(callback)

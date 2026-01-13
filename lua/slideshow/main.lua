@@ -83,9 +83,12 @@ end
 local function run_slideshow(slideshow, client)
   local nav = navigation.create(slideshow.slides)
 
+  -- Track stale state locally
+  local is_stale = false
+
   -- Render initial slide
   local slide = nav:current()
-  tui.render_slide(slide.content, nav:current_index(), nav:total(), false)
+  tui.render_slide(slide.content, nav:current_index(), nav:total(), false, false)
 
   -- Send initial highlights
   client:set_highlights(slide.lines)
@@ -96,6 +99,11 @@ local function run_slideshow(slideshow, client)
     if cmd == 'quit' then
       client:clear_highlights()
       return false -- stop loop
+    end
+
+    -- Check for stale status before processing command
+    if not is_stale then
+      is_stale = client:is_stale()
     end
 
     local new_slide
@@ -115,13 +123,13 @@ local function run_slideshow(slideshow, client)
     end
 
     if new_slide then
-      tui.render_slide(new_slide.content, nav:current_index(), nav:total(), at_end)
+      tui.render_slide(new_slide.content, nav:current_index(), nav:total(), at_end, is_stale)
       client:set_highlights(new_slide.lines)
       client:notify_slide_change(nav:current_index(), nav:total())
     elseif at_end then
       -- At end of slideshow - re-render with end indicator
       local current = nav:current()
-      tui.render_slide(current.content, nav:current_index(), nav:total(), true)
+      tui.render_slide(current.content, nav:current_index(), nav:total(), true, is_stale)
     end
 
     return true -- continue loop
