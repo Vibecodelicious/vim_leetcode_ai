@@ -107,15 +107,16 @@ function M.close()
     return
   end
 
-  -- Close tool window (keep buffer for restore)
-  if s.tool_window and vim.api.nvim_win_is_valid(s.tool_window) then
-    vim.api.nvim_win_close(s.tool_window, true)
+  -- Helper to safely close a window (can't close last window)
+  local function safe_close(win)
+    if win and vim.api.nvim_win_is_valid(win) and vim.fn.winnr('$') > 1 then
+      vim.api.nvim_win_close(win, true)
+    end
   end
 
-  -- Close AI window (keep buffer for restore)
-  if s.ai_window and vim.api.nvim_win_is_valid(s.ai_window) then
-    vim.api.nvim_win_close(s.ai_window, true)
-  end
+  -- Close tool window first, then AI window (keep buffers for restore)
+  safe_close(s.tool_window)
+  safe_close(s.ai_window)
 
   -- Update state
   state.update({
