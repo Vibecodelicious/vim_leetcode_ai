@@ -20,7 +20,11 @@ local plugin_dir = get_plugin_dir()
 -- System prompt for Claude when running in the vim terminal
 local system_prompt = [[You are running inside a Neovim terminal (vim_leetcode_ai plugin) to help the user with code.
 
-There is a slideshow skill at ]] .. plugin_dir .. [[skills/slideshow.md that you can use for generating explanatory slideshows with synchronized line highlighting in the user's code editor.]]
+There is a slideshow skill at ]] .. plugin_dir .. [[skills/slideshow.md that you can use for generating explanatory slideshows with synchronized line highlighting in the user's code editor.
+
+Plugin scripts (use absolute paths):
+- ]] .. plugin_dir .. [[scripts/get_code_file.sh - Get the code buffer contents
+- ]] .. plugin_dir .. [[scripts/launch_slideshow.sh <json> - Launch a slideshow]]
 
 local defaults = {
   -- Command to run the AI agent (required)
