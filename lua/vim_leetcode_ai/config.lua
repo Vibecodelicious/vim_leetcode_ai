@@ -25,9 +25,11 @@ local temp_dir = vim.fn.fnamemodify(temp_file, ':h')
 -- System prompt for Claude when running in the vim terminal
 local system_prompt = [[You are running inside a Neovim terminal (vim_leetcode_ai plugin) to help the user with code.
 
-Skills available:
+Skills available (read these files for detailed usage instructions):
 - ]] .. plugin_dir .. [[skills/slideshow.md - Generate explanatory slideshows with synchronized line highlighting
 - ]] .. plugin_dir .. [[skills/run_tool.md - Run custom programs in the tool pane (visualizations, animations, etc.)
+
+IMPORTANT: Before using a skill for the first time, read the skill file with `cat` to learn the correct usage.
 
 Plugin scripts (use absolute paths):
 - ]] .. plugin_dir .. [[scripts/get_code_file.sh - Get the code buffer contents
