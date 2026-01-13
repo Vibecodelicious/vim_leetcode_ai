@@ -20,6 +20,7 @@ import random
 # ============================================================================
 
 stars = []
+star_grid = {}  # (cols, rows) -> {(x,y): (bright, twinkle, char)}
 
 def init_stars(num_stars=150):
     global stars
@@ -33,14 +34,23 @@ def init_stars(num_stars=150):
             random.choice(['·', '∙', '*', '✦', '✧', '+'])
         ))
 
-def get_star_at(x, y, cols, rows, t):
-    """Check if there's a star at this position and return (char, r, g, b) or None"""
+def build_star_grid(cols, rows):
+    """Build a dict for O(1) star lookup"""
+    global star_grid
+    grid = {}
     for sx_r, sy_r, bright, twinkle, char in stars:
         sx = int(sx_r * cols)
         sy = int(sy_r * rows)
-        if sx == x and sy == y:
-            b = bright * (0.6 + 0.4 * math.sin(t * twinkle + sx * 0.1))
-            return (char, b, b, b * 0.9)
+        grid[(sx, sy)] = (bright, twinkle, char, sx)
+    star_grid = grid
+
+def get_star_at(x, y, t):
+    """O(1) star lookup"""
+    data = star_grid.get((x, y))
+    if data:
+        bright, twinkle, char, sx = data
+        b = bright * (0.6 + 0.4 * math.sin(t * twinkle + sx * 0.1))
+        return (char, b, b, b * 0.9)
     return None
 
 # ============================================================================
@@ -56,16 +66,15 @@ def in_square(x, y, cx, cy, size):
 
 def in_triangle(x, y, cx, cy, size):
     h = size * 0.866
-    top = (cx, cy - h * 0.6)
-    left = (cx - size/2, cy + h * 0.4)
-    right = (cx + size/2, cy + h * 0.4)
+    # Vertices
+    top_x, top_y = cx, cy - h * 0.6
+    left_x, left_y = cx - size * 0.5, cy + h * 0.4
+    right_x, right_y = cx + size * 0.5, cy + h * 0.4
 
-    def sign(p1, p2, p3):
-        return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
-
-    d1 = sign((x, y), top, left)
-    d2 = sign((x, y), left, right)
-    d3 = sign((x, y), right, top)
+    # Inline sign calculations
+    d1 = (x - left_x) * (top_y - left_y) - (top_x - left_x) * (y - left_y)
+    d2 = (x - right_x) * (left_y - right_y) - (left_x - right_x) * (y - right_y)
+    d3 = (x - top_x) * (right_y - top_y) - (right_x - top_x) * (y - top_y)
 
     has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
     has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
@@ -245,6 +254,7 @@ def rgb_to_ansi(r, g, b):
 
 # Background color for stars/space
 BG_SPACE = (0.02, 0.02, 0.06)
+BG_SPACE_ANSI = "5;5;15"  # Pre-computed ANSI string
 
 # ============================================================================
 # PIXEL SAMPLING
@@ -277,10 +287,17 @@ def main():
     init_stars(200)
 
     t = 0.0
+    last_size = (0, 0)
 
     try:
         while True:
             cols, rows = get_terminal_size()
+
+            # Rebuild star grid if terminal size changed
+            if (cols, rows) != last_size:
+                build_star_grid(cols, rows)
+                last_size = (cols, rows)
+
             vrows = rows * 2  # Virtual rows (2x resolution)
 
             center_x = cols // 2
@@ -297,7 +314,7 @@ def main():
                 x = center_x + orbit_rx * math.cos(angle)
                 y = center_y + orbit_ry * math.sin(angle)
                 depth = math.sin(angle)
-                scale = 0.25 + 0.75 * (depth + 1) / 2
+                scale = 0.25 + 1.75 * (depth + 1) / 2  # 0.25 (far) to 2.0 (near)
                 return x, y, depth, scale
 
             circle_x, circle_y, circle_depth, circle_scale = get_carousel_pos(rot)
@@ -336,24 +353,19 @@ def main():
 
                     # Both pixels are background - can use star characters
                     if c_top is None and c_bot is None:
-                        star = get_star_at(x, row, cols, rows, t)
+                        star = get_star_at(x, row, t)
                         if star:
                             char, sr, sg, sb = star
-                            fg = rgb_to_ansi(sr, sg, sb)
-                            bg = rgb_to_ansi(*BG_SPACE)
-                            line.append(f"\033[38;2;{fg}m\033[48;2;{bg}m{char}")
+                            line.append(f"\033[38;2;{int(sr*255)};{int(sg*255)};{int(sb*255)}m\033[48;2;{BG_SPACE_ANSI}m{char}")
                         else:
-                            bg = rgb_to_ansi(*BG_SPACE)
-                            line.append(f"\033[48;2;{bg}m ")
+                            line.append(f"\033[48;2;{BG_SPACE_ANSI}m ")
                     else:
                         # At least one pixel has a shape - use half-block
                         if c_top is None:
                             c_top = BG_SPACE
                         if c_bot is None:
                             c_bot = BG_SPACE
-                        fg = rgb_to_ansi(*c_top)
-                        bg = rgb_to_ansi(*c_bot)
-                        line.append(f"\033[38;2;{fg}m\033[48;2;{bg}m▀")
+                        line.append(f"\033[38;2;{int(c_top[0]*255)};{int(c_top[1]*255)};{int(c_top[2]*255)}m\033[48;2;{int(c_bot[0]*255)};{int(c_bot[1]*255)};{int(c_bot[2]*255)}m▀")
 
                 lines.append("".join(line) + "\033[0m")
 
