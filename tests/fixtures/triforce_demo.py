@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
-High-resolution version using UTF-8 half-block characters (▀)
-to double vertical resolution.
+Braille character version - 2x4 dots per character = 8x resolution!
 
-Three simulations masked by shapes:
-  Circle   = Fluid simulation
-  Square   = Plasma effect
-  Triangle = Mandelbrot zoom
+Braille Unicode block U+2800-U+28FF:
+  Each character is a 2x4 grid of dots:
+    ⠁⠂⠄⡀    Bit positions:
+    ⠈⠐⠠⢀    0 3
+    ⣀⣄⣤⣴    1 4
+    ⣿⣶⣤⣀    2 5
+               6 7
 """
 
+import numpy as np
 import math
 import time
 import sys
@@ -16,100 +19,89 @@ import os
 import random
 
 # ============================================================================
-# STARFIELD
+# BRAILLE ENCODING
 # ============================================================================
 
-stars = []
-star_grid = {}  # (cols, rows) -> {(x,y): (bright, twinkle, char)}
+# Braille dot positions (2 cols x 4 rows):
+#   0 3
+#   1 4
+#   2 5
+#   6 7
+BRAILLE_BASE = 0x2800
 
-def init_stars(num_stars=150):
-    global stars
-    stars = []
-    for _ in range(num_stars):
-        stars.append((
-            random.random(),
-            random.random(),
-            random.uniform(0.3, 1.0),
-            random.uniform(1.0, 5.0),
-            random.choice(['·', '∙', '*', '✦', '✧', '+'])
-        ))
-
-def build_star_grid(cols, rows):
-    """Build a dict for O(1) star lookup"""
-    global star_grid
-    grid = {}
-    for sx_r, sy_r, bright, twinkle, char in stars:
-        sx = int(sx_r * cols)
-        sy = int(sy_r * rows)
-        grid[(sx, sy)] = (bright, twinkle, char, sx)
-    star_grid = grid
-
-def get_star_at(x, y, t):
-    """O(1) star lookup"""
-    data = star_grid.get((x, y))
-    if data:
-        bright, twinkle, char, sx = data
-        b = bright * (0.6 + 0.4 * math.sin(t * twinkle + sx * 0.1))
-        return (char, b, b, b * 0.9)
-    return None
+def encode_braille_char(dots):
+    """Convert 2x4 boolean array to braille character.
+    dots[row][col] where row 0-3, col 0-1"""
+    code = 0
+    if dots[0, 0]: code |= 0x01
+    if dots[1, 0]: code |= 0x02
+    if dots[2, 0]: code |= 0x04
+    if dots[0, 1]: code |= 0x08
+    if dots[1, 1]: code |= 0x10
+    if dots[2, 1]: code |= 0x20
+    if dots[3, 0]: code |= 0x40
+    if dots[3, 1]: code |= 0x80
+    return chr(BRAILLE_BASE + code)
 
 # ============================================================================
-# SHAPE MASKS
+# VECTORIZED HELPERS
 # ============================================================================
 
-def in_circle(x, y, cx, cy, r):
-    return (x - cx)**2 + (y - cy)**2 <= r**2
+def hsv_to_rgb_vec(h, s, v):
+    h = h % 1.0
+    i = (h * 6).astype(int)
+    f = h * 6 - i
+    p = v * (1 - s)
+    q = v * (1 - f * s)
+    t = v * (1 - (1 - f) * s)
+    r = np.where(i == 0, v, np.where(i == 1, q, np.where(i == 2, p,
+         np.where(i == 3, p, np.where(i == 4, t, v)))))
+    g = np.where(i == 0, t, np.where(i == 1, v, np.where(i == 2, v,
+         np.where(i == 3, q, np.where(i == 4, p, p)))))
+    b = np.where(i == 0, p, np.where(i == 1, p, np.where(i == 2, t,
+         np.where(i == 3, v, np.where(i == 4, v, q)))))
+    return r, g, b
 
-def in_square(x, y, cx, cy, size):
+def circle_mask(X, Y, cx, cy, r):
+    return (X - cx)**2 + (Y - cy)**2 <= r**2
+
+def square_mask(X, Y, cx, cy, size):
     half = size / 2
-    return abs(x - cx) <= half and abs(y - cy) <= half
+    return (np.abs(X - cx) <= half) & (np.abs(Y - cy) <= half)
 
-def in_triangle(x, y, cx, cy, size):
+def triangle_mask(X, Y, cx, cy, size):
     h = size * 0.866
-    # Vertices
     top_x, top_y = cx, cy - h * 0.6
     left_x, left_y = cx - size * 0.5, cy + h * 0.4
     right_x, right_y = cx + size * 0.5, cy + h * 0.4
+    d1 = (X - left_x) * (top_y - left_y) - (top_x - left_x) * (Y - left_y)
+    d2 = (X - right_x) * (left_y - right_y) - (left_x - right_x) * (Y - right_y)
+    d3 = (X - top_x) * (right_y - top_y) - (right_x - top_x) * (Y - top_y)
+    has_neg = (d1 < 0) | (d2 < 0) | (d3 < 0)
+    has_pos = (d1 > 0) | (d2 > 0) | (d3 > 0)
+    return ~(has_neg & has_pos)
 
-    # Inline sign calculations
-    d1 = (x - left_x) * (top_y - left_y) - (top_x - left_x) * (y - left_y)
-    d2 = (x - right_x) * (left_y - right_y) - (left_x - right_x) * (y - right_y)
-    d3 = (x - top_x) * (right_y - top_y) - (right_x - top_x) * (y - top_y)
-
-    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
-    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
-
-    return not (has_neg and has_pos)
-
-# ============================================================================
-# PLASMA EFFECT
-# ============================================================================
-
-def plasma(x, y, t, cols, rows):
-    nx = x / cols * 20
-    ny = y / rows * 20
-
-    v1 = math.sin(nx + t)
-    v2 = math.sin((ny + t) * 0.5)
-    v3 = math.sin((nx + ny + t) * 0.5)
-
-    cx, cy = cols/2 / cols * 20, rows/2 / rows * 20
-    d = math.sqrt((nx - cx)**2 + (ny - cy)**2)
-    v4 = math.sin(d - t * 2)
-
+def plasma_vec(X, Y, t, cols, rows):
+    nx = X / cols * 20
+    ny = Y / rows * 20
+    v1 = np.sin(nx + t)
+    v2 = np.sin((ny + t) * 0.5)
+    v3 = np.sin((nx + ny + t) * 0.5)
+    d = np.sqrt((nx - 10)**2 + (ny - 10)**2)
+    v4 = np.sin(d - t * 2)
     v = (v1 + v2 + v3 + v4) / 4
-
     hue = (v + 1) / 2 + t * 0.05
-    return hsv_to_rgb(hue, 0.85, 0.9)
+    return hsv_to_rgb_vec(hue, 0.85, 0.9)
 
 # ============================================================================
-# NAVIER-STOKES (simplified)
+# NAVIER-STOKES FLUID SIMULATION
 # ============================================================================
 
 NS_N = 32
-ns_u = [0.0] * ((NS_N+2) * (NS_N+2))
-ns_v = [0.0] * ((NS_N+2) * (NS_N+2))
-ns_dens = [0.0] * ((NS_N+2) * (NS_N+2))
+NS_SIZE = (NS_N + 2) ** 2
+ns_u = np.zeros(NS_SIZE)
+ns_v = np.zeros(NS_SIZE)
+ns_dens = np.zeros(NS_SIZE)
 
 def ns_IX(x, y):
     return int(x) + int(y) * (NS_N + 2)
@@ -120,25 +112,22 @@ def ns_add_source(t):
         angle = t * (0.8 + k * 0.5) + k * 3.14
         cx = NS_N//2 + int(math.cos(angle) * NS_N * 0.25)
         cy = NS_N//2 + int(math.sin(angle) * NS_N * 0.25)
-
         for di in range(-1, 2):
             for dj in range(-1, 2):
                 idx = ns_IX(cx + di, cy + dj)
-                if 0 <= idx < len(ns_dens):
+                if 0 <= idx < NS_SIZE:
                     ns_dens[idx] += 0.3
-
         vx = -math.sin(angle) * 30
         vy = math.cos(angle) * 30
         idx = ns_IX(cx, cy)
-        if 0 <= idx < len(ns_u):
+        if 0 <= idx < NS_SIZE:
             ns_u[idx] += vx * 0.1
             ns_v[idx] += vy * 0.1
 
 def ns_step():
     global ns_dens, ns_u, ns_v
-    new_dens = [0.0] * len(ns_dens)
+    new_dens = np.zeros(NS_SIZE)
     dt = 0.1
-
     for j in range(1, NS_N+1):
         for i in range(1, NS_N+1):
             idx = ns_IX(i, j)
@@ -146,16 +135,14 @@ def ns_step():
             y = j - dt * NS_N * ns_v[idx] * 0.1
             x = max(0.5, min(NS_N + 0.5, x))
             y = max(0.5, min(NS_N + 0.5, y))
-
             i0, j0 = int(x), int(y)
             s, t_val = x - i0, y - j0
-
-            if 0 <= ns_IX(i0, j0) < len(ns_dens) and 0 <= ns_IX(i0+1, j0+1) < len(ns_dens):
-                new_dens[idx] = (1-s) * ((1-t_val) * ns_dens[ns_IX(i0, j0)] + t_val * ns_dens[ns_IX(i0, j0+1)]) + \
-                                s * ((1-t_val) * ns_dens[ns_IX(i0+1, j0)] + t_val * ns_dens[ns_IX(i0+1, j0+1)])
-
+            idx00, idx01 = ns_IX(i0, j0), ns_IX(i0, j0+1)
+            idx10, idx11 = ns_IX(i0+1, j0), ns_IX(i0+1, j0+1)
+            if 0 <= idx00 < NS_SIZE and 0 <= idx11 < NS_SIZE:
+                new_dens[idx] = ((1-s) * ((1-t_val) * ns_dens[idx00] + t_val * ns_dens[idx01]) +
+                                 s * ((1-t_val) * ns_dens[idx10] + t_val * ns_dens[idx11]))
     ns_dens = new_dens
-
     cx, cy = NS_N//2, NS_N//2
     for j in range(1, NS_N+1):
         for i in range(1, NS_N+1):
@@ -170,62 +157,58 @@ def ns_step():
             ns_u[idx] *= 0.98
             ns_v[idx] *= 0.98
 
-def get_ns_color(x, y, t, shape_cx, shape_cy, shape_size):
-    gx = int(1 + (x - shape_cx + shape_size/2) / shape_size * NS_N)
-    gy = int(1 + (y - shape_cy + shape_size/2) / shape_size * NS_N)
-
-    gx = max(1, min(NS_N, gx))
-    gy = max(1, min(NS_N, gy))
-
-    d = ns_dens[ns_IX(gx, gy)]
+def fluid_vec(X, Y, t, cx, cy, size):
+    """Vectorized fluid color lookup from Navier-Stokes grid"""
+    gx = (1 + (X - cx + size/2) / size * NS_N).astype(int)
+    gy = (1 + (Y - cy + size/2) / size * NS_N).astype(int)
+    gx = np.clip(gx, 1, NS_N)
+    gy = np.clip(gy, 1, NS_N)
+    idx = gx + gy * (NS_N + 2)
+    d = ns_dens[idx]
     hue = (d * 0.5 + t * 0.03) % 1.0
-    sat = min(1.0, d * 2 + 0.3)
-    val = min(1.0, d * 1.5 + 0.1)
-
-    return hsv_to_rgb(hue, sat, val)
-
-# ============================================================================
-# MANDELBROT
-# ============================================================================
+    sat = np.minimum(1.0, d * 2 + 0.3)
+    val = np.minimum(1.0, d * 1.5 + 0.1)
+    return hsv_to_rgb_vec(hue, sat, val)
 
 MB_TARGET = (-0.743643887037158704752191506114774, 0.131825904205311970493132056385139)
 mb_zoom = 1.0
 
-def mandelbrot_color(x, y, t, shape_cx, shape_cy, shape_size):
+def mandelbrot_vec(X, Y, t, cx, cy, size):
     global mb_zoom
-
-    aspect = 2.0
     width = 3.0 / mb_zoom
-    height = width * aspect
-
-    nx = (x - shape_cx) / shape_size
-    ny = (y - shape_cy) / shape_size * aspect
-
+    nx = (X - cx) / size
+    ny = (Y - cy) / size
     c_re = MB_TARGET[0] + nx * width
-    c_im = MB_TARGET[1] + ny * height
-
-    z_re, z_im = 0.0, 0.0
-    max_iter = min(100, int(50 + math.log(mb_zoom + 1) * 10))
-
+    c_im = MB_TARGET[1] + ny * width
+    z_re = np.zeros_like(c_re)
+    z_im = np.zeros_like(c_im)
+    max_iter = min(35, int(20 + math.log(mb_zoom + 1) * 4))
+    escape_i = np.full(c_re.shape, max_iter, dtype=float)
+    escaped = np.zeros(c_re.shape, dtype=bool)
     for i in range(max_iter):
+        z_re = np.clip(z_re, -1e10, 1e10)
+        z_im = np.clip(z_im, -1e10, 1e10)
         z_re_sq = z_re * z_re
         z_im_sq = z_im * z_im
-
-        if z_re_sq + z_im_sq > 4.0:
-            log_zn = math.log(z_re_sq + z_im_sq) / 2
-            nu = math.log(log_zn / math.log(2)) / math.log(2)
-            smooth_i = i + 1 - nu
-
-            hue = (smooth_i * 0.03 + t * 0.05) % 1.0
-            return hsv_to_rgb(hue, 0.8, min(1.0, smooth_i * 0.02 + 0.4))
-
-        z_im = 2 * z_re * z_im + c_im
+        mag_sq = z_re_sq + z_im_sq
+        newly_escaped = (mag_sq > 4.0) & ~escaped
+        if np.any(newly_escaped):
+            safe_mag = np.maximum(mag_sq[newly_escaped], 1e-10)
+            log_zn = np.log(safe_mag) / 2
+            nu = np.log(np.maximum(log_zn / math.log(2), 1e-10)) / math.log(2)
+            escape_i[newly_escaped] = i + 1 - nu
+            escaped |= newly_escaped
+        if np.all(escaped):
+            break
+        z_im_new = 2 * z_re * z_im + c_im
         z_re = z_re_sq - z_im_sq + c_re
-
-    return (0, 0, 0)
+        z_im = z_im_new
+    hue = (escape_i * 0.03 + t * 0.05) % 1.0
+    val = np.where(escaped, np.minimum(1.0, escape_i * 0.02 + 0.4), 0.0)
+    return hsv_to_rgb_vec(hue, 0.8, val)
 
 # ============================================================================
-# UTILITIES
+# MAIN
 # ============================================================================
 
 def get_terminal_size():
@@ -235,145 +218,195 @@ def get_terminal_size():
     except:
         return 80, 24
 
-def hsv_to_rgb(h, s, v):
-    h = h % 1.0
-    i = int(h * 6)
-    f = h * 6 - i
-    p = v * (1 - s)
-    q = v * (1 - f * s)
-    t = v * (1 - (1 - f) * s)
-    if i == 0: return v, t, p
-    elif i == 1: return q, v, p
-    elif i == 2: return p, v, t
-    elif i == 3: return p, q, v
-    elif i == 4: return t, p, v
-    else: return v, p, q
-
-def rgb_to_ansi(r, g, b):
-    return f"{int(r*255)};{int(g*255)};{int(b*255)}"
-
-# Background color for stars/space
-BG_SPACE = (0.0, 0.0, 0.25)  # Navy blue
-BG_SPACE_ANSI = "0;0;64"  # Pre-computed ANSI string
-
-# ============================================================================
-# PIXEL SAMPLING
-# ============================================================================
-
-def get_shape_color(x, y, t, cols, vrows, shapes):
-    """Get shape color at virtual pixel (x, y), or None if no shape covers it.
-    Shapes are sorted back-to-front, so iterate all and let last match win."""
-    color = None
-    for shape_type, depth, cx, cy, size, scale in shapes:
-        if shape_type == 'circle':
-            if in_circle(x, y, cx, cy, size):
-                color = get_ns_color(x, y, t, cx, cy, size * 2)
-        elif shape_type == 'square':
-            if in_square(x, y, cx, cy, size):
-                color = plasma(x, y / 2, t, cols, vrows // 2)
-        elif shape_type == 'triangle':
-            if in_triangle(x, y, cx, cy, size):
-                color = mandelbrot_color(x, y / 2, t, cx, cy / 2, size / 2)
-    return color
-
-# ============================================================================
-# MAIN - HIGH RESOLUTION VERSION
-# ============================================================================
+BG_COLOR = (0.02, 0.02, 0.06)
 
 def main():
     global mb_zoom
 
     print("\033[?25l\033[2J", end="", flush=True)
-    init_stars(200)
 
     t = 0.0
     last_size = (0, 0)
+    X_grid = Y_grid = None
+    frame_times = []
+    last_frame_time = time.time()
+
+    # Stars stored as dict: (char_col, char_row) -> (char, brightness, twinkle_speed)
+    star_chars = {}
+    STAR_GLYPHS = ['·', '∙', '*', '✦', '✧', '+']
 
     try:
         while True:
             cols, rows = get_terminal_size()
 
-            # Rebuild star grid if terminal size changed
+            # Virtual resolution: 2x width, 4x height (braille is 2x4)
+            vwidth = cols * 2
+            vheight = rows * 4
+
             if (cols, rows) != last_size:
-                build_star_grid(cols, rows)
+                # Rebuild coordinate grids
+                x_coords = np.arange(vwidth, dtype=float)
+                y_coords = np.arange(vheight, dtype=float)
+                X_grid, Y_grid = np.meshgrid(x_coords, y_coords)
+
+                # Generate stars at character cell positions
+                star_chars = {}
+                for _ in range(200):
+                    sc, sr = random.randint(0, cols-1), random.randint(0, rows-1)
+                    star_chars[(sc, sr)] = (
+                        random.choice(STAR_GLYPHS),
+                        random.uniform(0.4, 1.0),
+                        random.uniform(1.0, 5.0)
+                    )
+
                 last_size = (cols, rows)
 
-            vrows = rows * 2  # Virtual rows (2x resolution)
-
-            center_x = cols // 2
-            center_y = vrows // 2  # Center in virtual space
-
-            orbit_rx = cols * 0.3
-            orbit_ry = vrows * 0.15
-
-            base_size = min(cols, vrows) * 0.56
-
+            center_x = vwidth // 2
+            center_y = vheight // 2
+            orbit_rx = vwidth * 0.3
+            orbit_ry = vheight * 0.15
+            base_size = min(vwidth, vheight) * 0.5
             rot = t * 0.24
 
             def get_carousel_pos(angle):
                 x = center_x + orbit_rx * math.cos(angle)
                 y = center_y + orbit_ry * math.sin(angle)
                 depth = math.sin(angle)
-                scale = 0.25 + 1.75 * (depth + 1) / 2  # 0.25 (far) to 2.0 (near)
+                scale = 0.25 + 1.75 * (depth + 1) / 2
                 return x, y, depth, scale
 
-            circle_x, circle_y, circle_depth, circle_scale = get_carousel_pos(rot)
-            square_x, square_y, square_depth, square_scale = get_carousel_pos(rot + 2.094)
-            tri_x, tri_y, tri_depth, tri_scale = get_carousel_pos(rot + 4.189)
-
-            circle_r = base_size * circle_scale / 2
-            shape_size = base_size * square_scale
-            tri_base = base_size * tri_scale
-
-            shapes = [
-                ('circle', circle_depth, circle_x, circle_y, circle_r, circle_scale),
-                ('square', square_depth, square_x, square_y, shape_size, square_scale),
-                ('triangle', tri_depth, tri_x, tri_y, tri_base, tri_scale),
+            positions = [get_carousel_pos(rot + i * 2.094) for i in range(3)]
+            shape_data = [
+                ('circle', positions[0]),
+                ('square', positions[1]),
+                ('triangle', positions[2]),
             ]
-            shapes.sort(key=lambda s: s[1])
+            shape_data.sort(key=lambda s: s[1][2])
 
-            ns_add_source(t)
-            ns_step()
             mb_zoom *= 1.02
-            if mb_zoom > 1e8:
+            if mb_zoom > 2.5e7:  # 1/4 of original max depth
                 mb_zoom = 1.0
 
+            # Update Navier-Stokes fluid simulation
+            ns_add_source(t)
+            ns_step()
+
+            # RGB arrays
+            R = np.full((vheight, vwidth), BG_COLOR[0])
+            G = np.full((vheight, vwidth), BG_COLOR[1])
+            B = np.full((vheight, vwidth), BG_COLOR[2])
+
+            # Occlusion culling: front-to-back
+            filled = np.zeros((vheight, vwidth), dtype=bool)
+
+            for shape_type, (cx, cy, depth, scale) in reversed(shape_data):
+                size = base_size * scale
+
+                if shape_type == 'circle':
+                    shape_mask = circle_mask(X_grid, Y_grid, cx, cy, size / 2)
+                elif shape_type == 'square':
+                    shape_mask = square_mask(X_grid, Y_grid, cx, cy, size)
+                elif shape_type == 'triangle':
+                    shape_mask = triangle_mask(X_grid, Y_grid, cx, cy, size)
+
+                visible = shape_mask & ~filled
+                if np.any(visible):
+                    X_vis, Y_vis = X_grid[visible], Y_grid[visible]
+
+                    if shape_type == 'circle':
+                        r, g, b = fluid_vec(X_vis, Y_vis, t, cx, cy, size)
+                    elif shape_type == 'square':
+                        r, g, b = plasma_vec(X_vis, Y_vis, t, vwidth, vheight)
+                    elif shape_type == 'triangle':
+                        r, g, b = mandelbrot_vec(X_vis, Y_vis, t, cx, cy, size / 2)
+
+                    R[visible] = r
+                    G[visible] = g
+                    B[visible] = b
+                    filled |= shape_mask
+
+            # Compute brightness for dot thresholding
+            brightness = 0.299 * R + 0.587 * G + 0.114 * B
+
+            # Build output using braille
             sys.stdout.write("\033[H")
-
             lines = []
+
             for row in range(rows):
-                line = []
-                y_top = row * 2      # Virtual y for top half
-                y_bot = row * 2 + 1  # Virtual y for bottom half
+                line_chars = []
+                vy_base = row * 4
 
-                for x in range(cols):
-                    # Check shapes at virtual resolution (2x)
-                    c_top = get_shape_color(x, y_top, t, cols, vrows, shapes)
-                    c_bot = get_shape_color(x, y_bot, t, cols, vrows, shapes)
+                for col in range(cols):
+                    vx_base = col * 2
 
-                    # Both pixels are background - can use star characters
-                    if c_top is None and c_bot is None:
-                        star = get_star_at(x, row, t)
-                        if star:
-                            char, sr, sg, sb = star
-                            line.append(f"\033[38;2;{int(sr*255)};{int(sg*255)};{int(sb*255)}m\033[48;2;{BG_SPACE_ANSI}m{char}")
-                        else:
-                            line.append(f"\033[48;2;{BG_SPACE_ANSI}m ")
+                    # Check if this cell has any shape pixels (with bounds checking)
+                    vy_end = min(vy_base + 4, vheight)
+                    vx_end = min(vx_base + 2, vwidth)
+                    if vy_base < vheight and vx_base < vwidth:
+                        cell_filled = filled[vy_base:vy_end, vx_base:vx_end]
+                        has_shape = np.any(cell_filled)
                     else:
-                        # At least one pixel has a shape - use half-block
-                        if c_top is None:
-                            c_top = BG_SPACE
-                        if c_bot is None:
-                            c_bot = BG_SPACE
-                        line.append(f"\033[38;2;{int(c_top[0]*255)};{int(c_top[1]*255)};{int(c_top[2]*255)}m\033[48;2;{int(c_bot[0]*255)};{int(c_bot[1]*255)};{int(c_bot[2]*255)}m▀")
+                        has_shape = False
 
-                lines.append("".join(line) + "\033[0m")
+                    if not has_shape:
+                        # Background cell - use star character if present
+                        star_data = star_chars.get((col, row))
+                        if star_data:
+                            char, base_bright, twinkle_speed = star_data
+                            b = base_bright * (0.6 + 0.4 * math.sin(t * twinkle_speed + col * 0.1))
+                            # Blue-white tint for stars
+                            sr = int(b * 200)
+                            sg = int(b * 220)
+                            sb = int(b * 255)
+                            line_chars.append(f"\033[48;2;5;5;20m\033[38;2;{sr};{sg};{sb}m{char}")
+                        else:
+                            line_chars.append(f"\033[48;2;5;5;20m\033[38;2;5;5;20m ")
+                    else:
+                        # Shape cell - use braille
+                        dots = np.zeros((4, 2), dtype=bool)
+                        r_sum, g_sum, b_sum = 0.0, 0.0, 0.0
+                        count = 0
 
+                        for dy in range(4):
+                            for dx in range(2):
+                                vy = vy_base + dy
+                                vx = vx_base + dx
+                                if vy < vheight and vx < vwidth:
+                                    if brightness[vy, vx] > 0.25:
+                                        dots[dy, dx] = True
+                                    r_sum += R[vy, vx]
+                                    g_sum += G[vy, vx]
+                                    b_sum += B[vy, vx]
+                                    count += 1
+
+                        char = encode_braille_char(dots)
+
+                        if count > 0:
+                            r_avg = int(min(255, r_sum / count * 255))
+                            g_avg = int(min(255, g_sum / count * 255))
+                            b_avg = int(min(255, b_sum / count * 255))
+                        else:
+                            r_avg, g_avg, b_avg = 5, 5, 20
+
+                        line_chars.append(f"\033[48;2;5;5;20m\033[38;2;{r_avg};{g_avg};{b_avg}m{char}")
+
+                lines.append("".join(line_chars) + "\033[0m")
+
+            # FPS
+            now = time.time()
+            frame_times.append(now - last_frame_time)
+            last_frame_time = now
+            if len(frame_times) > 30:
+                frame_times.pop(0)
+            fps = len(frame_times) / sum(frame_times) if frame_times else 0
+
+            sys.stdout.write("\033[48;2;5;5;15m")  # Dark background
             sys.stdout.write("\r\n".join(lines))
+            sys.stdout.write(f"\033[1;{cols-12}H\033[48;2;30;30;50m {fps:.1f} fps ")
             sys.stdout.flush()
 
             t += 0.1
-            time.sleep(0.03)
+            time.sleep(0.02)
 
     except KeyboardInterrupt:
         pass
