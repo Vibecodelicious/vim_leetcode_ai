@@ -45,7 +45,7 @@ For VISUAL animations (not just text), copy and modify the template:
   cp ]] .. plugin_dir .. [[templates/animation.lua ]] .. temp_dir .. [[/anim.lua
 Then edit FRAMES array with your visuals (use box drawing: ┌─┐│└─┘, arrows: ↑↓←→, colors via ANSI)
 Launch with: ]] .. plugin_dir .. [[scripts/run_tool.sh nvim -l ]] .. temp_dir .. [[/anim.lua
-Controls: space=play/pause, n=next, p=prev, q=quit
+Controls: space/n=next, p=prev, r=restart, q=quit
 
 ## Highlighting Code (for custom tools)
   nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').set_lines({5,6,7})\")"

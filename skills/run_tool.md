@@ -16,8 +16,9 @@ cp /path/to/plugin/templates/animation.lua /tmp/nvimXXXX/anim.lua
 ```
 
 The template provides:
-- Play/pause with spacebar
-- Next/prev with n/p keys
+- Next frame: space/n/j
+- Prev frame: p/k
+- Restart: r, Quit: q
 - Code line highlighting synced to frames
 - Proper terminal handling
 
