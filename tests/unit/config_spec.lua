@@ -13,8 +13,8 @@ describe('config', function()
       -- Act
       local cfg = config.get()
 
-      -- Assert
-      assert.equals('claude', cfg.ai_command)
+      -- Assert (ai_command starts with 'claude' and includes system prompt)
+      assert.is_true(cfg.ai_command:match('^claude') ~= nil)
       assert.equals('<leader>ai', cfg.keys.open)
       assert.equals('<leader>aq', cfg.keys.close)
       assert.equals(']s', cfg.keys.next_slide)
@@ -64,7 +64,7 @@ describe('config', function()
 
       -- Assert: should have all defaults
       local cfg = config.get()
-      assert.equals('claude', cfg.ai_command)
+      assert.is_true(cfg.ai_command:match('^claude') ~= nil)
     end)
 
     it('should handle nil options', function()
@@ -73,7 +73,7 @@ describe('config', function()
 
       -- Assert: should have all defaults
       local cfg = config.get()
-      assert.equals('claude', cfg.ai_command)
+      assert.is_true(cfg.ai_command:match('^claude') ~= nil)
     end)
   end)
 end)

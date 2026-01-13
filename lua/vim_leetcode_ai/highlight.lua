@@ -62,9 +62,10 @@ function M.set_lines(lines)
     vim.notify(msg, vim.log.levels.WARN)
   end
 
-  -- Scroll to first highlighted line if needed
+  -- Scroll to show highlighted range
   if #valid_lines > 0 then
-    M.scroll_to_highlight(valid_lines[1])
+    table.sort(valid_lines)
+    M.scroll_to_highlight_range(valid_lines[1], valid_lines[#valid_lines])
   end
 end
 
@@ -76,9 +77,10 @@ function M.clear()
   end
 end
 
---- Scroll the code window to show a highlighted line
----@param line number Line number to scroll to (1-indexed)
-function M.scroll_to_highlight(line)
+--- Scroll the code window to show a highlighted range
+---@param first_line number First line of range (1-indexed)
+---@param last_line number Last line of range (1-indexed)
+function M.scroll_to_highlight_range(first_line, last_line)
   local s = state.get()
 
   if not s.code_window or not vim.api.nvim_win_is_valid(s.code_window) then
@@ -94,14 +96,23 @@ function M.scroll_to_highlight(line)
 
   local topline = win_info.topline
   local botline = win_info.botline
+  local range_size = last_line - first_line + 1
 
-  -- Check if line is already visible
-  if line >= topline and line <= botline then
+  -- Check if entire range is already visible
+  if first_line >= topline and last_line <= botline then
     return
   end
 
-  -- Scroll to center the highlighted line
-  local target_topline = math.max(1, line - math.floor(win_height / 2))
+  local target_topline
+  if range_size >= win_height then
+    -- Range is too large to fit - show from the beginning
+    target_topline = first_line
+  else
+    -- Range fits - try to show entire range with some context
+    -- Position so first_line is near the top with a small margin
+    local margin = math.floor((win_height - range_size) / 3)
+    target_topline = math.max(1, first_line - margin)
+  end
 
   -- Use nvim_win_call to set the view
   vim.api.nvim_win_call(s.code_window, function()

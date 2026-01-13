@@ -1,0 +1,40 @@
+{
+  "slides": [
+    {
+      "content": "LeetCode #20: Valid Parentheses\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nGiven a string of brackets, determine if it's valid.\n\nThis is a CLASSIC interview problem that tests your\nunderstanding of the STACK data structure.\n\nTime: O(n)  |  Space: O(n)",
+      "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    {
+      "content": "The Key Insight: Use a STACK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nWhy a stack? Because brackets must be closed in\nREVERSE ORDER of how they were opened!\n\n  \"({[]})\"  ←  Valid (LIFO order)\n  \"([)]\"    ←  Invalid (wrong order)\n\nThe stack lets us track what's still \"open\".",
+      "lines": [19, 20]
+    },
+    {
+      "content": "Step 1: Create the Bracket Mapping\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nWe map each CLOSING bracket to its OPENING pair.\n\nThis lets us quickly check: \"Does this closer\nmatch the most recent opener?\"\n\n  ')' → '('\n  '}' → '{'\n  ']' → '['",
+      "lines": [22, 23, 24, 25, 26, 27]
+    },
+    {
+      "content": "Step 2: Process Each Character\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nWe iterate through the string one character at a time.\n\nFor each character, we need to decide:\n  • Is it an OPENING bracket? → Push to stack\n  • Is it a CLOSING bracket? → Check if it matches",
+      "lines": [29, 30]
+    },
+    {
+      "content": "Step 3: Handle CLOSING Brackets\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nWhen we see a closing bracket:\n\n1. Pop the top of the stack (most recent opener)\n2. If stack is empty, use '#' as a dummy value\n3. Check if the popped opener matches this closer\n\nIf they don't match → Invalid string!",
+      "lines": [31, 32, 33, 34, 35, 36, 37, 38]
+    },
+    {
+      "content": "Step 4: Handle OPENING Brackets\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nWhen we see an opening bracket:\n\n  Simply PUSH it onto the stack!\n\nWe'll deal with matching it later when we\nencounter its corresponding closing bracket.",
+      "lines": [39, 40, 41]
+    },
+    {
+      "content": "Step 5: Final Validation\n━━━━━━━━━━━━━━━━━━━━━━━━\n\nAfter processing all characters:\n\n  • Stack EMPTY → All brackets matched! ✓\n  • Stack NOT EMPTY → Unmatched openers ✗\n\nReturn True only if len(stack) == 0",
+      "lines": [43, 44]
+    },
+    {
+      "content": "Walkthrough: \"({[]})\"\n━━━━━━━━━━━━━━━━━━━━━\n\n  '(' → push    stack: ['(']\n  '{' → push    stack: ['(', '{']\n  '[' → push    stack: ['(', '{', '[']\n  ']' → pop '[' stack: ['(', '{']  ✓\n  '}' → pop '{' stack: ['(']       ✓\n  ')' → pop '(' stack: []          ✓\n\n  Stack empty → VALID!",
+      "lines": [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+    },
+    {
+      "content": "Test Cases\n━━━━━━━━━━\n\n  \"()\"      → True   (simple match)\n  \"()[]{}\"  → True   (multiple pairs)\n  \"(]\"      → False  (mismatched types)\n  \"([)]\"    → False  (wrong order)\n  \"{[]}\"    → True   (nested correctly)\n\n\n  🎉 You've mastered Valid Parentheses!",
+      "lines": [47, 48, 49, 50, 51, 52]
+    }
+  ]
+}

@@ -134,7 +134,7 @@ local config = require('vim_leetcode_ai.config')
 
 test('config.get: returns defaults', function()
   local cfg = config.get()
-  assert_eq(cfg.ai_command, 'claude', 'should have default ai_command')
+  assert_not_nil(cfg.ai_command:match('^claude'), 'should have default ai_command starting with claude')
 end)
 
 test('config.setup: merges options', function()
@@ -159,8 +159,8 @@ test('highlight.clear: is callable', function()
   assert_not_nil(highlight.clear, 'should exist')
 end)
 
-test('highlight.scroll_to_highlight: is callable', function()
-  assert_not_nil(highlight.scroll_to_highlight, 'should exist')
+test('highlight.scroll_to_highlight_range: is callable', function()
+  assert_not_nil(highlight.scroll_to_highlight_range, 'should exist')
 end)
 
 test('highlight.mark_stale: updates state', function()

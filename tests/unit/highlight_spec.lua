@@ -163,9 +163,9 @@ describe('highlight', function()
     end)
   end)
 
-  describe('scroll_to_highlight()', function()
+  describe('scroll_to_highlight_range()', function()
     it('should be callable', function()
-      assert.is_function(highlight.scroll_to_highlight)
+      assert.is_function(highlight.scroll_to_highlight_range)
     end)
 
     -- Note: Testing actual scrolling requires a window, which is

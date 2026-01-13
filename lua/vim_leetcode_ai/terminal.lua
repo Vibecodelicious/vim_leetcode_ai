@@ -135,7 +135,13 @@ function M.launch_in_tool_pane(cmd)
   -- Switch to tool window
   vim.api.nvim_set_current_win(s.tool_window)
 
-  -- Delete old buffer
+  -- Create a scratch buffer FIRST and set it in the window
+  -- This must happen BEFORE deleting the old buffer, otherwise
+  -- deleting the buffer might close the window
+  local scratch_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_win_set_buf(s.tool_window, scratch_buf)
+
+  -- Now safe to delete old buffer (window has a new buffer)
   if s.tool_terminal_buf and vim.api.nvim_buf_is_valid(s.tool_terminal_buf) then
     vim.api.nvim_buf_delete(s.tool_terminal_buf, { force = true })
   end
