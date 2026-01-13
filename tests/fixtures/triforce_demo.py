@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
+High-resolution version using UTF-8 half-block characters (▀)
+to double vertical resolution.
+
 Three simulations masked by shapes:
-  Circle   = Plasma effect
-  Square   = Navier-Stokes fluid
+  Circle   = Fluid simulation
+  Square   = Plasma effect
   Triangle = Mandelbrot zoom
 """
 
@@ -16,29 +19,28 @@ import random
 # STARFIELD
 # ============================================================================
 
-stars = []  # List of (x_ratio, y_ratio, brightness, twinkle_speed, size)
+stars = []
 
 def init_stars(num_stars=150):
     global stars
     stars = []
     for _ in range(num_stars):
         stars.append((
-            random.random(),           # x position (0-1 ratio)
-            random.random(),           # y position (0-1 ratio)
-            random.uniform(0.3, 1.0),  # base brightness
-            random.uniform(1.0, 5.0),  # twinkle speed
-            random.choice(['·', '∙', '*', '✦', '✧', '+'])  # star char
+            random.random(),
+            random.random(),
+            random.uniform(0.3, 1.0),
+            random.uniform(1.0, 5.0),
+            random.choice(['·', '∙', '*', '✦', '✧', '+'])
         ))
 
 def get_star_at(x, y, cols, rows, t):
-    """Check if there's a star at this position and return its color"""
+    """Check if there's a star at this position and return (char, r, g, b) or None"""
     for sx_r, sy_r, bright, twinkle, char in stars:
         sx = int(sx_r * cols)
         sy = int(sy_r * rows)
         if sx == x and sy == y:
-            # Twinkling effect
             b = bright * (0.6 + 0.4 * math.sin(t * twinkle + sx * 0.1))
-            return char, b, b, b * 0.9  # Slightly blue-white tint
+            return (char, b, b, b * 0.9)
     return None
 
 # ============================================================================
@@ -53,9 +55,7 @@ def in_square(x, y, cx, cy, size):
     return abs(x - cx) <= half and abs(y - cy) <= half
 
 def in_triangle(x, y, cx, cy, size):
-    # Equilateral triangle pointing up
-    h = size * 0.866  # height = size * sqrt(3)/2
-    # Vertices
+    h = size * 0.866
     top = (cx, cy - h * 0.6)
     left = (cx - size/2, cy + h * 0.4)
     right = (cx + size/2, cy + h * 0.4)
@@ -77,7 +77,6 @@ def in_triangle(x, y, cx, cy, size):
 # ============================================================================
 
 def plasma(x, y, t, cols, rows):
-    # Normalize coordinates
     nx = x / cols * 20
     ny = y / rows * 20
 
@@ -95,7 +94,7 @@ def plasma(x, y, t, cols, rows):
     return hsv_to_rgb(hue, 0.85, 0.9)
 
 # ============================================================================
-# NAVIER-STOKES (simplified for performance)
+# NAVIER-STOKES (simplified)
 # ============================================================================
 
 NS_N = 32
@@ -108,7 +107,6 @@ def ns_IX(x, y):
 
 def ns_add_source(t):
     global ns_dens, ns_u, ns_v
-    # Rotating emitter
     for k in range(2):
         angle = t * (0.8 + k * 0.5) + k * 3.14
         cx = NS_N//2 + int(math.cos(angle) * NS_N * 0.25)
@@ -129,14 +127,12 @@ def ns_add_source(t):
 
 def ns_step():
     global ns_dens, ns_u, ns_v
-    # Simplified advection
     new_dens = [0.0] * len(ns_dens)
     dt = 0.1
 
     for j in range(1, NS_N+1):
         for i in range(1, NS_N+1):
             idx = ns_IX(i, j)
-            # Trace back
             x = i - dt * NS_N * ns_u[idx] * 0.1
             y = j - dt * NS_N * ns_v[idx] * 0.1
             x = max(0.5, min(NS_N + 0.5, x))
@@ -151,25 +147,21 @@ def ns_step():
 
     ns_dens = new_dens
 
-    # Decay and add vortex
     cx, cy = NS_N//2, NS_N//2
     for j in range(1, NS_N+1):
         for i in range(1, NS_N+1):
             idx = ns_IX(i, j)
             ns_dens[idx] *= 0.99
-            # Vortex
             dx, dy = i - cx, j - cy
             dist = math.sqrt(dx*dx + dy*dy) + 0.1
             if dist < NS_N * 0.4:
                 strength = 0.3 * (1 - dist / (NS_N * 0.4))
                 ns_u[idx] += -dy / dist * strength
                 ns_v[idx] += dx / dist * strength
-            # Dampen velocity
             ns_u[idx] *= 0.98
             ns_v[idx] *= 0.98
 
 def get_ns_color(x, y, t, shape_cx, shape_cy, shape_size):
-    # Map screen coords to NS grid
     gx = int(1 + (x - shape_cx + shape_size/2) / shape_size * NS_N)
     gy = int(1 + (y - shape_cy + shape_size/2) / shape_size * NS_N)
 
@@ -193,19 +185,16 @@ mb_zoom = 1.0
 def mandelbrot_color(x, y, t, shape_cx, shape_cy, shape_size):
     global mb_zoom
 
-    # Map screen coords to complex plane
     aspect = 2.0
     width = 3.0 / mb_zoom
     height = width * aspect
 
-    # Normalize within shape
     nx = (x - shape_cx) / shape_size
     ny = (y - shape_cy) / shape_size * aspect
 
     c_re = MB_TARGET[0] + nx * width
     c_im = MB_TARGET[1] + ny * height
 
-    # Iterate
     z_re, z_im = 0.0, 0.0
     max_iter = min(100, int(50 + math.log(mb_zoom + 1) * 10))
 
@@ -214,7 +203,6 @@ def mandelbrot_color(x, y, t, shape_cx, shape_cy, shape_size):
         z_im_sq = z_im * z_im
 
         if z_re_sq + z_im_sq > 4.0:
-            # Smooth coloring
             log_zn = math.log(z_re_sq + z_im_sq) / 2
             nu = math.log(log_zn / math.log(2)) / math.log(2)
             smooth_i = i + 1 - nu
@@ -225,7 +213,7 @@ def mandelbrot_color(x, y, t, shape_cx, shape_cy, shape_size):
         z_im = 2 * z_re * z_im + c_im
         z_re = z_re_sq - z_im_sq + c_re
 
-    return (0, 0, 0)  # Inside set = black
+    return (0, 0, 0)
 
 # ============================================================================
 # UTILITIES
@@ -252,19 +240,40 @@ def hsv_to_rgb(h, s, v):
     elif i == 4: return t, p, v
     else: return v, p, q
 
-def rgb_bg(r, g, b):
-    return f"\033[48;2;{int(r*255)};{int(g*255)};{int(b*255)}m"
+def rgb_to_ansi(r, g, b):
+    return f"{int(r*255)};{int(g*255)};{int(b*255)}"
+
+# Background color for stars/space
+BG_SPACE = (0.02, 0.02, 0.06)
 
 # ============================================================================
-# MAIN
+# PIXEL SAMPLING
+# ============================================================================
+
+def get_shape_color(x, y, t, cols, vrows, shapes):
+    """Get shape color at virtual pixel (x, y), or None if no shape covers it.
+    Shapes are sorted back-to-front, so iterate all and let last match win."""
+    color = None
+    for shape_type, depth, cx, cy, size, scale in shapes:
+        if shape_type == 'circle':
+            if in_circle(x, y, cx, cy, size):
+                color = get_ns_color(x, y, t, cx, cy, size * 2)
+        elif shape_type == 'square':
+            if in_square(x, y, cx, cy, size):
+                color = plasma(x, y / 2, t, cols, vrows // 2)
+        elif shape_type == 'triangle':
+            if in_triangle(x, y, cx, cy, size):
+                color = mandelbrot_color(x, y / 2, t, cx, cy / 2, size / 2)
+    return color
+
+# ============================================================================
+# MAIN - HIGH RESOLUTION VERSION
 # ============================================================================
 
 def main():
     global mb_zoom
 
     print("\033[?25l\033[2J", end="", flush=True)
-
-    # Initialize starfield
     init_stars(200)
 
     t = 0.0
@@ -272,99 +281,81 @@ def main():
     try:
         while True:
             cols, rows = get_terminal_size()
+            vrows = rows * 2  # Virtual rows (2x resolution)
 
-            # Carousel effect - ellipse with depth scaling
             center_x = cols // 2
-            center_y = rows // 2
+            center_y = vrows // 2  # Center in virtual space
 
-            # Ellipse radii (wider than tall for carousel look)
-            orbit_rx = cols * 0.3   # horizontal radius
-            orbit_ry = rows * 0.15  # vertical radius (smaller = more "flat" carousel)
+            orbit_rx = cols * 0.3
+            orbit_ry = vrows * 0.15
 
-            # Base shape size
-            base_size = min(cols, rows * 2) * 0.56
+            base_size = min(cols, vrows) * 0.56
 
-            # Rotation angle
             rot = t * 0.24
 
-            # Calculate 3D-like positions for each shape
-            # depth: -1 (far/top) to +1 (near/bottom)
             def get_carousel_pos(angle):
                 x = center_x + orbit_rx * math.cos(angle)
                 y = center_y + orbit_ry * math.sin(angle)
-                depth = math.sin(angle)  # -1 at top, +1 at bottom
-                # Scale based on depth (bigger when closer)
-                scale = 0.25 + 0.75 * (depth + 1) / 2  # 0.25 to 1.0
+                depth = math.sin(angle)
+                scale = 0.25 + 0.75 * (depth + 1) / 2
                 return x, y, depth, scale
 
-            # Get positions for all three shapes
             circle_x, circle_y, circle_depth, circle_scale = get_carousel_pos(rot)
             square_x, square_y, square_depth, square_scale = get_carousel_pos(rot + 2.094)
             tri_x, tri_y, tri_depth, tri_scale = get_carousel_pos(rot + 4.189)
 
-            # Calculate sizes based on depth
             circle_r = base_size * circle_scale / 2
-            circle_cx, circle_cy = circle_x, circle_y
-
             shape_size = base_size * square_scale
-            square_cx, square_cy = square_x, square_y
-
             tri_base = base_size * tri_scale
-            tri_cx, tri_cy = tri_x, tri_y
 
-            # Sort shapes by depth (back to front)
             shapes = [
-                ('circle', circle_depth, circle_cx, circle_cy, circle_r, circle_scale),
-                ('square', square_depth, square_cx, square_cy, shape_size, square_scale),
-                ('triangle', tri_depth, tri_cx, tri_cy, tri_base, tri_scale),
+                ('circle', circle_depth, circle_x, circle_y, circle_r, circle_scale),
+                ('square', square_depth, square_x, square_y, shape_size, square_scale),
+                ('triangle', tri_depth, tri_x, tri_y, tri_base, tri_scale),
             ]
-            shapes.sort(key=lambda s: s[1])  # Sort by depth (render far ones first)
+            shapes.sort(key=lambda s: s[1])
 
-            # Update simulations
             ns_add_source(t)
             ns_step()
             mb_zoom *= 1.02
             if mb_zoom > 1e8:
                 mb_zoom = 1.0
 
-            # Render
             sys.stdout.write("\033[H")
 
             lines = []
-            for y in range(rows):
-                row = []
+            for row in range(rows):
+                line = []
+                y_top = row * 2      # Virtual y for top half
+                y_bot = row * 2 + 1  # Virtual y for bottom half
+
                 for x in range(cols):
-                    # Check shapes in depth order (back to front)
-                    pixel_set = False
-                    r, g, b = 0, 0, 0
+                    # Check shapes at virtual resolution (2x)
+                    c_top = get_shape_color(x, y_top, t, cols, vrows, shapes)
+                    c_bot = get_shape_color(x, y_bot, t, cols, vrows, shapes)
 
-                    # Iterate through sorted shapes (back to front)
-                    for shape_type, depth, cx, cy, size, scale in shapes:
-                        if shape_type == 'circle':
-                            if in_circle(x, y * 2, cx, cy * 2, size):
-                                r, g, b = get_ns_color(x, y * 2, t, cx, cy * 2, size * 2)
-                                pixel_set = True
-                        elif shape_type == 'square':
-                            if in_square(x, y * 2, cx, cy * 2, size):
-                                r, g, b = plasma(x, y, t, cols, rows)
-                                pixel_set = True
-                        elif shape_type == 'triangle':
-                            if in_triangle(x, y * 2, cx, cy * 2, size):
-                                r, g, b = mandelbrot_color(x, y, t, cx, cy, size / 2)
-                                pixel_set = True
-
-                    if pixel_set:
-                        row.append(f"{rgb_bg(r, g, b)} ")
-                    else:
-                        # Starfield background
-                        star = get_star_at(x, y, cols, rows, t)
+                    # Both pixels are background - can use star characters
+                    if c_top is None and c_bot is None:
+                        star = get_star_at(x, row, cols, rows, t)
                         if star:
                             char, sr, sg, sb = star
-                            row.append(f"\033[48;2;5;5;15m\033[38;2;{int(sr*255)};{int(sg*255)};{int(sb*255)}m{char}")
+                            fg = rgb_to_ansi(sr, sg, sb)
+                            bg = rgb_to_ansi(*BG_SPACE)
+                            line.append(f"\033[38;2;{fg}m\033[48;2;{bg}m{char}")
                         else:
-                            row.append("\033[48;2;5;5;15m ")
+                            bg = rgb_to_ansi(*BG_SPACE)
+                            line.append(f"\033[48;2;{bg}m ")
+                    else:
+                        # At least one pixel has a shape - use half-block
+                        if c_top is None:
+                            c_top = BG_SPACE
+                        if c_bot is None:
+                            c_bot = BG_SPACE
+                        fg = rgb_to_ansi(*c_top)
+                        bg = rgb_to_ansi(*c_bot)
+                        line.append(f"\033[38;2;{fg}m\033[48;2;{bg}m▀")
 
-                lines.append("".join(row) + "\033[0m")
+                lines.append("".join(line) + "\033[0m")
 
             sys.stdout.write("\r\n".join(lines))
             sys.stdout.flush()
