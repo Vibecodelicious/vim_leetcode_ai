@@ -20,12 +20,21 @@ function M.setup()
     require('vim_leetcode_ai').close()
   end, { desc = 'Close AI assistant' })
 
-  -- Slideshow navigation (will be implemented in US2)
+  -- Slideshow navigation - normal mode
   vim.keymap.set('n', keys.next_slide, function()
     M.send_to_slideshow('next')
   end, { desc = 'Next slide' })
 
   vim.keymap.set('n', keys.prev_slide, function()
+    M.send_to_slideshow('prev')
+  end, { desc = 'Previous slide' })
+
+  -- Slideshow navigation - terminal mode (so keybindings work when focused in terminal)
+  vim.keymap.set('t', keys.next_slide, function()
+    M.send_to_slideshow('next')
+  end, { desc = 'Next slide' })
+
+  vim.keymap.set('t', keys.prev_slide, function()
     M.send_to_slideshow('prev')
   end, { desc = 'Previous slide' })
 end
