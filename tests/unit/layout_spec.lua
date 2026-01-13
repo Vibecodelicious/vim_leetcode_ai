@@ -13,23 +13,22 @@ describe('layout', function()
   end)
 
   describe('create()', function()
-    it('should create a three-pane layout', function()
+    it('should create a two-pane layout', function()
       -- Arrange: start with a single window
       local initial_win_count = #vim.api.nvim_list_wins()
 
       -- Act
       layout.create()
 
-      -- Assert: should have 3 windows (tool, code, ai terminal)
+      -- Assert: should have 2 windows (code, ai terminal) - tool pane created on demand
       local s = state.get()
       assert.is_true(s.layout_open)
       assert.is_not_nil(s.code_window)
-      assert.is_not_nil(s.tool_window)
+      assert.is_nil(s.tool_window) -- Tool pane not created yet
       assert.is_not_nil(s.ai_window)
 
-      -- All windows should be valid
+      -- Windows should be valid
       assert.is_true(vim.api.nvim_win_is_valid(s.code_window))
-      assert.is_true(vim.api.nvim_win_is_valid(s.tool_window))
       assert.is_true(vim.api.nvim_win_is_valid(s.ai_window))
     end)
 
@@ -62,10 +61,41 @@ describe('layout', function()
     end)
   end)
 
-  describe('get_tool_pane_size()', function()
-    it('should return dimensions of tool pane', function()
+  describe('show_tool_pane()', function()
+    it('should create tool pane on demand', function()
+      -- Arrange: create layout first
+      layout.create()
+      local s = state.get()
+      assert.is_nil(s.tool_window)
+
+      -- Act
+      local tool_win = layout.show_tool_pane()
+
+      -- Assert
+      assert.is_not_nil(tool_win)
+      s = state.get()
+      assert.is_not_nil(s.tool_window)
+      assert.is_true(vim.api.nvim_win_is_valid(s.tool_window))
+    end)
+
+    it('should return existing tool pane if already open', function()
       -- Arrange
       layout.create()
+      local first_win = layout.show_tool_pane()
+
+      -- Act
+      local second_win = layout.show_tool_pane()
+
+      -- Assert: should return same window
+      assert.equals(first_win, second_win)
+    end)
+  end)
+
+  describe('get_tool_pane_size()', function()
+    it('should return dimensions of tool pane', function()
+      -- Arrange: need to show tool pane first
+      layout.create()
+      layout.show_tool_pane()
 
       -- Act
       local size = layout.get_tool_pane_size()

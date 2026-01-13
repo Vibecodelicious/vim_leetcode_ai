@@ -6,8 +6,8 @@ local M = {}
 local state = require('vim_leetcode_ai.state')
 local config = require('vim_leetcode_ai.config')
 
---- Create the three-pane layout
---- Layout: tool output (top-left), code editor (top-right), AI terminal (bottom)
+--- Create the two-pane layout (code editor + AI terminal)
+--- Tool pane is created on-demand when a tool is launched
 function M.create()
   local s = state.get()
 
@@ -24,19 +24,59 @@ function M.create()
 
   -- Calculate dimensions
   local total_height = vim.o.lines - vim.o.cmdheight - 1
-  local total_width = vim.o.columns
   local bottom_height = math.floor(total_height * cfg.layout.bottom_height)
-  local top_height = total_height - bottom_height
-  local tool_width = math.floor(total_width * cfg.layout.tool_width)
 
   -- Create the layout:
-  -- 1. Split horizontally to create bottom pane (AI terminal) - full width
+  -- Split horizontally to create bottom pane (AI terminal) - full width
   vim.cmd('botright split')
   local ai_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_height(ai_win, bottom_height)
 
-  -- 2. Go back to code window and split vertically for tool pane on left
+  -- Spawn AI agent in bottom pane
+  local terminal = require('vim_leetcode_ai.terminal')
+  local job_id = terminal.spawn_ai_agent(ai_win)
+
+  -- Update state (no tool window yet)
+  state.update({
+    layout_open = true,
+    code_buffer = code_buf,
+    code_window = code_win,
+    tool_window = nil,
+    tool_terminal_buf = nil,
+    ai_window = ai_win,
+  })
+
+  -- Focus back on code window
   vim.api.nvim_set_current_win(code_win)
+end
+
+--- Show the tool pane (create if doesn't exist)
+--- Called automatically when a tool is launched
+---@return number|nil tool_window Window ID of the tool pane
+function M.show_tool_pane()
+  local s = state.get()
+
+  if not s.layout_open then
+    vim.notify('AI assistant is not open', vim.log.levels.WARN)
+    return nil
+  end
+
+  -- If tool window already exists and is valid, return it
+  if s.tool_window and vim.api.nvim_win_is_valid(s.tool_window) then
+    return s.tool_window
+  end
+
+  local cfg = config.get()
+
+  -- Calculate tool pane width
+  local total_width = vim.o.columns
+  local tool_width = math.floor(total_width * cfg.layout.tool_width)
+
+  -- Go to code window and split vertically for tool pane on left
+  if s.code_window and vim.api.nvim_win_is_valid(s.code_window) then
+    vim.api.nvim_set_current_win(s.code_window)
+  end
+
   vim.cmd('aboveleft vsplit')
   local tool_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_width(tool_win, tool_width)
@@ -44,40 +84,19 @@ function M.create()
   -- Create empty buffer for tool pane
   local tool_buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_win_set_buf(tool_win, tool_buf)
-  -- Use unique buffer name with timestamp to avoid conflicts
   local buf_name = string.format('vim_leetcode_ai://tool/%d', os.time())
   pcall(vim.api.nvim_buf_set_name, tool_buf, buf_name)
   vim.bo[tool_buf].buftype = 'nofile'
   vim.bo[tool_buf].bufhidden = 'hide'
   vim.bo[tool_buf].swapfile = false
 
-  -- Set tool pane placeholder content
-  vim.api.nvim_buf_set_lines(tool_buf, 0, -1, false, {
-    '',
-    '  AI Tool Output',
-    '  ──────────────',
-    '',
-    '  Waiting for AI to launch a tool...',
-    '',
-  })
-
-  -- Spawn AI agent in bottom pane
-  vim.api.nvim_set_current_win(ai_win)
-  local terminal = require('vim_leetcode_ai.terminal')
-  local job_id = terminal.spawn_ai_agent(ai_win)
-
   -- Update state
   state.update({
-    layout_open = true,
-    code_buffer = code_buf,
-    code_window = code_win,
     tool_window = tool_win,
     tool_terminal_buf = tool_buf,
-    ai_window = ai_win,
   })
 
-  -- Focus back on code window
-  vim.api.nvim_set_current_win(code_win)
+  return tool_win
 end
 
 --- Close the layout and restore normal view

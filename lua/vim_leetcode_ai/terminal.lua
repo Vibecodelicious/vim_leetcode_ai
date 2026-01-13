@@ -119,10 +119,16 @@ function M.launch_in_tool_pane(cmd)
     return nil
   end
 
-  if not s.tool_window or not vim.api.nvim_win_is_valid(s.tool_window) then
-    vim.notify('Tool pane not found', vim.log.levels.ERROR)
+  -- Create tool pane if it doesn't exist
+  local layout = require('vim_leetcode_ai.layout')
+  local tool_win = layout.show_tool_pane()
+  if not tool_win then
+    vim.notify('Failed to create tool pane', vim.log.levels.ERROR)
     return nil
   end
+
+  -- Refresh state after potentially creating tool pane
+  s = state.get()
 
   -- Kill existing tool process if any
   if s.tool_terminal_job then
