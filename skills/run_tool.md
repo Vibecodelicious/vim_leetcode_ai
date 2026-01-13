@@ -68,6 +68,26 @@ nvim --server "$NVIM" --remote-expr "line('.')"
 nvim --server "$NVIM" --remote-expr "luaeval('vim.fn.expand(\"%:p\")')"
 ```
 
+### Highlighting Code Lines
+
+Custom tools can highlight lines in the code editor as they run - useful for visualizations that step through code:
+
+```bash
+# Highlight specific lines (1-indexed)
+nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').set_lines({5, 6, 7})\")"
+
+# Clear all highlights
+nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').clear()\")"
+```
+
+```python
+# Python example using subprocess
+import subprocess
+def highlight_lines(lines):
+    lua = f"require('vim_leetcode_ai.highlight').set_lines({list(lines)})"
+    subprocess.run(['nvim', '--server', os.environ['NVIM'], '--remote-expr', f'luaeval("{lua}")'])
+```
+
 ## When to Use
 
 - Custom visualizations beyond slideshows
