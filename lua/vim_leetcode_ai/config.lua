@@ -36,22 +36,23 @@ local system_prompt = [[You are running inside a Neovim terminal (vim_leetcode_a
 - NEVER use os.system('clear') in tools - use print('\033[2J\033[H', end='')
 - Use \r\n for line breaks in tool pane (raw terminal mode)
 
-## Highlighting Code Lines (for animations/visualizations)
-Custom tools can highlight and scroll to lines in the code editor via RPC:
-  nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').set_lines({5,6,7})\")"
-  nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').clear()\")"
-
-## Slideshow Format
+## Slideshow (text explanations with code highlighting)
 Pipe JSON to launch_slideshow.sh --stdin:
-  {"slides":[{"content":"Slide text","lines":[1,2,3]},{"content":"Next slide","lines":[5]}]}
-- content: explanation text
-- lines: 1-indexed line numbers to highlight
+  {"slides":[{"content":"Explanation text","lines":[1,2,3]}]}
 
-## Temp Directory
-Write temp files to: ]] .. temp_dir .. [[
+## Visual Animations (diagrams, ASCII art, box drawing)
+For VISUAL animations (not just text), copy and modify the template:
+  cp ]] .. plugin_dir .. [[templates/animation.lua ]] .. temp_dir .. [[/anim.lua
+Then edit FRAMES array with your visuals (use box drawing: ┌─┐│└─┘, arrows: ↑↓←→, colors via ANSI)
+Launch with: ]] .. plugin_dir .. [[scripts/run_tool.sh nvim -l ]] .. temp_dir .. [[/anim.lua
+Controls: space=play/pause, n=next, p=prev, q=quit
 
-## More Details
-See skill files for examples: ]] .. plugin_dir .. [[skills/]]
+## Highlighting Code (for custom tools)
+  nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').set_lines({5,6,7})\")"
+
+## Temp Directory: ]] .. temp_dir .. [[
+
+## More Details: ]] .. plugin_dir .. [[skills/]]
 
 local defaults = {
   -- Command to run the AI agent (required)

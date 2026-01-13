@@ -2,7 +2,26 @@
 
 Run custom programs in the tool pane for visualizations, animations, or interactive tools.
 
-## How to Launch
+## Visual Animation Template
+
+For visual animations (diagrams, ASCII art, box drawing), use the Lua template:
+
+```bash
+# Copy template to temp directory
+cp /path/to/plugin/templates/animation.lua /tmp/nvimXXXX/anim.lua
+
+# Edit the FRAMES array with your visual content
+# Then launch:
+./scripts/run_tool.sh nvim -l /tmp/nvimXXXX/anim.lua
+```
+
+The template provides:
+- Play/pause with spacebar
+- Next/prev with n/p keys
+- Code line highlighting synced to frames
+- Proper terminal handling
+
+## How to Launch Custom Tools
 
 ```bash
 ./scripts/run_tool.sh <command> [args...]
@@ -10,50 +29,34 @@ Run custom programs in the tool pane for visualizations, animations, or interact
 
 The command runs in the tool pane with access to `$NVIM` for RPC communication back to Neovim.
 
-## Examples
-
-```bash
-# Run a Python visualization
-./scripts/run_tool.sh python /tmp/nvimXXXX/visualization.py
-
-# Run a custom Lua script
-./scripts/run_tool.sh nvim -l /tmp/nvimXXXX/tool.lua
-
-# Run any interactive program
-./scripts/run_tool.sh ./my_tool --arg value
-```
-
-## Tips for Custom Tools
+## Tips for Custom Lua Tools
 
 ### Clearing the Screen
 
-Don't use `os.system('clear')` - it doesn't work reliably in all terminal contexts.
+Don't use `os.execute('clear')` - it doesn't work reliably. Use ANSI escape codes:
 
-Use ANSI escape codes directly:
-
-**Python:**
-```python
-print('\033[2J\033[H', end='')
-sys.stdout.flush()
-```
-
-**Lua:**
 ```lua
 io.write('\027[2J\027[H')
 io.flush()
 ```
 
-**Bash:**
-```bash
-printf '\033[2J\033[H'
-```
-
 ### Line Breaks in Raw Mode
 
-If the tool pane uses raw terminal mode, use `\r\n` instead of just `\n`:
+Use `\r\n` instead of just `\n`:
 
-```python
-print('Line 1\r\nLine 2\r\n')
+```lua
+io.write('Line 1\r\nLine 2\r\n')
+```
+
+### Colors via ANSI
+
+```lua
+io.write('\027[44;37m')  -- Blue background, white text
+io.write(' Title ')
+io.write('\027[0m')      -- Reset
+io.write('\027[90m')     -- Gray text
+io.write('Subtitle')
+io.write('\027[0m')
 ```
 
 ### RPC Communication
@@ -70,22 +73,35 @@ nvim --server "$NVIM" --remote-expr "luaeval('vim.fn.expand(\"%:p\")')"
 
 ### Highlighting Code Lines
 
-Custom tools can highlight lines in the code editor as they run - useful for visualizations that step through code:
+Custom tools can highlight lines in the code editor - useful for stepping through code:
 
-```bash
-# Highlight specific lines (1-indexed)
-nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').set_lines({5, 6, 7})\")"
+```lua
+-- Highlight specific lines (1-indexed)
+local function highlight_lines(lines)
+  local nvim_socket = os.getenv('NVIM')
+  if not nvim_socket then return end
 
-# Clear all highlights
-nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').clear()\")"
-```
+  local lines_str = '{' .. table.concat(lines, ',') .. '}'
+  os.execute(string.format(
+    'nvim --server "%s" --remote-expr "luaeval(\\"require(\'vim_leetcode_ai.highlight\').set_lines(%s)\\")" 2>/dev/null',
+    nvim_socket, lines_str
+  ))
+end
 
-```python
-# Python example using subprocess
-import subprocess
-def highlight_lines(lines):
-    lua = f"require('vim_leetcode_ai.highlight').set_lines({list(lines)})"
-    subprocess.run(['nvim', '--server', os.environ['NVIM'], '--remote-expr', f'luaeval("{lua}")'])
+-- Clear all highlights
+local function clear_highlights()
+  local nvim_socket = os.getenv('NVIM')
+  if not nvim_socket then return end
+
+  os.execute(string.format(
+    'nvim --server "%s" --remote-expr "luaeval(\\"require(\'vim_leetcode_ai.highlight\').clear()\\")" 2>/dev/null',
+    nvim_socket
+  ))
+end
+
+-- Usage
+highlight_lines({5, 6, 7})
+clear_highlights()
 ```
 
 ## When to Use
