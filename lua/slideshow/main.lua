@@ -128,8 +128,18 @@ local function run_slideshow(slideshow, client)
   end)
 end
 
+--- Cleanup function to delete temp file
+---@param file_path string|nil Path to delete
+local function cleanup(file_path)
+  if file_path then
+    os.remove(file_path)
+  end
+end
+
 --- Main entry point
 local function main()
+  local file_to_cleanup = nil
+
   -- Parse arguments
   local options, err = parse_args()
   if err == 'help' then
@@ -148,10 +158,12 @@ local function main()
     slideshow, err = parser.parse_json(options.data)
   else
     slideshow, err = parser.parse_file(options.file)
+    file_to_cleanup = options.file -- Mark for cleanup
   end
 
   if not slideshow then
     tui.show_error(err)
+    cleanup(file_to_cleanup)
     os.exit(2)
   end
 
@@ -160,15 +172,20 @@ local function main()
   local connected, connect_err = client:connect()
   if not connected then
     tui.show_error(connect_err)
+    cleanup(file_to_cleanup)
     os.exit(3)
   end
 
-  -- Run the slideshow
-  run_slideshow(slideshow, client)
+  -- Run the slideshow (wrapped in pcall for cleanup on error)
+  local ok, run_err = pcall(run_slideshow, slideshow, client)
+  if not ok then
+    tui.show_error('Slideshow error: ' .. tostring(run_err))
+  end
 
   -- Cleanup
   client:disconnect()
-  os.exit(0)
+  cleanup(file_to_cleanup)
+  os.exit(ok and 0 or 4)
 end
 
 -- Run if executed as script (not required as module)

@@ -12,6 +12,11 @@ end
 
 local plugin_dir = get_plugin_dir()
 
+-- Create a temp directory for slideshow files
+-- vim.fn.tempname() returns a path like /tmp/nvimXXXXXX/0, we use its directory
+local temp_file = vim.fn.tempname()
+local temp_dir = vim.fn.fnamemodify(temp_file, ':h')
+
 ---@class VimLeetcodeAIConfig
 ---@field ai_command string Command to run the AI agent
 ---@field keys table Keybinding configuration
@@ -24,11 +29,14 @@ There is a slideshow skill at ]] .. plugin_dir .. [[skills/slideshow.md that you
 
 Plugin scripts (use absolute paths):
 - ]] .. plugin_dir .. [[scripts/get_code_file.sh - Get the code buffer contents
-- ]] .. plugin_dir .. [[scripts/launch_slideshow.sh <json> - Launch a slideshow]]
+- ]] .. plugin_dir .. [[scripts/launch_slideshow.sh <file> - Launch a slideshow
+
+Temp directory for slideshow files: ]] .. temp_dir .. [[
+Write slideshow JSON files there (e.g., ]] .. temp_dir .. [[/slideshow.json)]]
 
 local defaults = {
   -- Command to run the AI agent (required)
-  ai_command = 'claude --system-prompt ' .. vim.fn.shellescape(system_prompt),
+  ai_command = 'claude --system-prompt ' .. vim.fn.shellescape(system_prompt) .. ' --add-dir ' .. vim.fn.shellescape(temp_dir),
 
   -- Keybindings
   keys = {
