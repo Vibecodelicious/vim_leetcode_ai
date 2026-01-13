@@ -31,6 +31,7 @@ Skills available:
 
 Plugin scripts (use absolute paths):
 - ]] .. plugin_dir .. [[scripts/get_code_file.sh - Get the code buffer contents
+- ]] .. plugin_dir .. [[scripts/open_file.sh <path> - Open a file in the code pane (NOT vim/nvim directly!)
 - ]] .. plugin_dir .. [[scripts/launch_slideshow.sh <file> - Launch a slideshow
 - ]] .. plugin_dir .. [[scripts/run_tool.sh <command> [args...] - Run any program in the tool pane
 
