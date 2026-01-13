@@ -1,67 +1,159 @@
 #!/usr/bin/env -S nvim -l
 -- Animation Template
--- A visual animation with play/pause/next/prev controls and code highlighting
+-- Visual animation with bar charts, colors, and code highlighting
 --
 -- Usage: nvim -l animation.lua
 -- Controls: space/n/j=next, p/k=prev, r=restart, q=quit
+--
+-- ============================================================================
+-- BE CREATIVE! This template shows ONE example (bar chart for sorting).
+-- Your visualization should match the algorithm/concept being explained:
+--
+--   - Sorting algorithms → bar charts with colored comparisons/swaps
+--   - Tree traversals → ASCII tree structures with highlighted nodes
+--   - Graph algorithms → node/edge diagrams showing visited paths
+--   - Linked lists → boxes connected with arrows: [A]→[B]→[C]
+--   - Stack/Queue → vertical/horizontal box representations
+--   - Binary search → number line with shrinking search range
+--   - Dynamic programming → 2D grids/tables filling in
+--   - Recursion → call stack visualization
+--
+-- Use ANSI colors liberally to show state (red=active, green=done, etc.)
+-- Use box drawing characters: ┌─┐│└┘├┤┬┴┼ and arrows: ↑↓←→↔
+-- Make it VISUAL - if it could be plain text, use a slideshow instead!
+--
+-- IMPORTANT: Before launching, open the code file with open_file.sh so the
+-- user sees code alongside the animation. Each frame's `lines` array syncs
+-- highlights to the code - use this to show which lines are executing!
+--
+-- NOTE: You're not limited to this framework! run_tool.sh can run ANY program.
+-- You could write a Python script, a video game, or a fully custom interactive
+-- visualization - whatever best explains the concept!
+-- ============================================================================
 
--- Configuration: Edit these for your animation
+-- ANSI color codes (add more as needed)
+local RESET = '\027[0m'
+local RED = '\027[91m'      -- Active/pivot element
+local GREEN = '\027[92m'    -- Sorted/done
+local YELLOW = '\027[93m'   -- Comparing
+local BLUE = '\027[94m'     -- In range
+local CYAN = '\027[96m'     -- Secondary highlight
+local MAGENTA = '\027[95m'  -- Tertiary highlight
+local GRAY = '\027[90m'     -- Inactive
+local BOLD = '\027[1m'
+
+-- Configuration
 local CONFIG = {
-  title = "Algorithm Visualization",
+  title = "Sorting Visualization",  -- Change this!
 }
 
--- Animation frames: each frame has display content and lines to highlight
--- The display should be VISUAL (use box drawing, colors, ASCII art)
+-- ============================================================================
+-- HELPER FUNCTIONS - Modify these or write your own for different visuals
+-- ============================================================================
+
+-- Example helper: render a bar chart from array with highlighted indices
+local function render_bars(arr, highlights)
+  highlights = highlights or {}
+  local max_val = 0
+  for _, v in ipairs(arr) do
+    if v > max_val then max_val = v end
+  end
+
+  local lines = {}
+  local height = 8
+
+  -- Draw bars top to bottom
+  for row = height, 1, -1 do
+    local line = "  "
+    for i, val in ipairs(arr) do
+      local bar_height = math.floor((val / max_val) * height)
+      local color = highlights[i] or GRAY
+      if bar_height >= row then
+        line = line .. color .. '██' .. RESET .. ' '
+      else
+        line = line .. '   '
+      end
+    end
+    table.insert(lines, line)
+  end
+
+  -- Draw separator and values
+  table.insert(lines, "  " .. string.rep("───", #arr))
+  local val_line = "  "
+  for _, v in ipairs(arr) do
+    val_line = val_line .. string.format("%-3d", v)
+  end
+  table.insert(lines, val_line)
+
+  return table.concat(lines, "\r\n")
+end
+
+-- ============================================================================
+-- FRAMES - Each frame has:
+--   lines = {line numbers to highlight in code editor}
+--   render = function that returns the visual string
+--
+-- The example below shows a sorting visualization. DELETE IT and create
+-- your own frames appropriate to the algorithm you're explaining!
+-- ============================================================================
 local FRAMES = {
   {
-    lines = {1, 2},  -- lines to highlight in code editor
-    display = [[
-┌─────────────────────────────────┐
-│  Step 1: Initialize            │
-├─────────────────────────────────┤
-│                                 │
-│    arr = [3, 1, 4, 1, 5]       │
-│            ↑                    │
-│           [0]                   │
-│                                 │
-│    Pointer starts at index 0   │
-│                                 │
-└─────────────────────────────────┘
-]],
+    lines = {1, 2},
+    render = function()
+      local arr = {64, 25, 12, 22, 11}
+      local hl = {[1] = BLUE, [2] = BLUE, [3] = BLUE, [4] = BLUE, [5] = BLUE}
+      return "Initial Array\r\n\r\n" .. render_bars(arr, hl) .. "\r\n\r\nStarting selection sort..."
+    end
   },
   {
-    lines = {3, 4},
-    display = [[
-┌─────────────────────────────────┐
-│  Step 2: Compare               │
-├─────────────────────────────────┤
-│                                 │
-│    arr = [3, 1, 4, 1, 5]       │
-│            ↑  ↑                 │
-│           [0][1]                │
-│                                 │
-│    Compare: 3 > 1? YES → swap  │
-│                                 │
-└─────────────────────────────────┘
-]],
+    lines = {4, 5},
+    render = function()
+      local arr = {64, 25, 12, 22, 11}
+      local hl = {[1] = RED, [2] = YELLOW}
+      return "Finding Minimum (Pass 1)\r\n\r\n" .. render_bars(arr, hl) .. "\r\n\r\n" ..
+             RED .. "██" .. RESET .. " Current min (64)  " ..
+             YELLOW .. "██" .. RESET .. " Comparing (25)"
+    end
   },
   {
-    lines = {5, 6},
-    display = [[
-┌─────────────────────────────────┐
-│  Step 3: After Swap            │
-├─────────────────────────────────┤
-│                                 │
-│    arr = [1, 3, 4, 1, 5]       │
-│               ↑  ↑              │
-│              [1][2]             │
-│                                 │
-│    ✓ Swapped! Now compare next │
-│                                 │
-└─────────────────────────────────┘
-]],
+    lines = {4, 5},
+    render = function()
+      local arr = {64, 25, 12, 22, 11}
+      local hl = {[2] = RED, [3] = YELLOW}
+      return "Finding Minimum (Pass 1)\r\n\r\n" .. render_bars(arr, hl) .. "\r\n\r\n" ..
+             RED .. "██" .. RESET .. " Current min (25)  " ..
+             YELLOW .. "██" .. RESET .. " Comparing (12) ← smaller!"
+    end
   },
-  -- Add more frames...
+  {
+    lines = {4, 5},
+    render = function()
+      local arr = {64, 25, 12, 22, 11}
+      local hl = {[3] = RED, [5] = YELLOW}
+      return "Finding Minimum (Pass 1)\r\n\r\n" .. render_bars(arr, hl) .. "\r\n\r\n" ..
+             RED .. "██" .. RESET .. " Current min (12)  " ..
+             YELLOW .. "██" .. RESET .. " Found 11 ← new minimum!"
+    end
+  },
+  {
+    lines = {7, 8},
+    render = function()
+      local arr = {11, 25, 12, 22, 64}
+      local hl = {[1] = GREEN, [5] = GREEN}
+      return "After Swap\r\n\r\n" .. render_bars(arr, hl) .. "\r\n\r\n" ..
+             GREEN .. "██" .. RESET .. " Swapped: 64 ↔ 11\r\n" ..
+             "First element now in final position"
+    end
+  },
+  {
+    lines = {3},
+    render = function()
+      local arr = {11, 12, 22, 25, 64}
+      local hl = {[1] = GREEN, [2] = GREEN, [3] = GREEN, [4] = GREEN, [5] = GREEN}
+      return "Sorting Complete!\r\n\r\n" .. render_bars(arr, hl) .. "\r\n\r\n" ..
+             GREEN .. "All elements sorted" .. RESET
+    end
+  },
 }
 
 -----------------------------------------------------------------------
@@ -85,7 +177,7 @@ local function restore_terminal()
 end
 
 local function write_line(text)
-  io.write(text:gsub('\n', '\r\n'))
+  io.write((text:gsub('\n', '\r\n')))  -- parens discard gsub's second return value (count)
   io.write('\r\n')
 end
 
@@ -124,8 +216,8 @@ local function render()
   io.write('\027[0m')  -- Reset
   io.write('\r\n')
 
-  -- Frame content
-  write_line(frame.display)
+  -- Frame content (call the render function)
+  write_line(frame.render())
 
   -- Status bar
   io.write('\027[90m')  -- Gray text

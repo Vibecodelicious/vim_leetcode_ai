@@ -40,12 +40,22 @@ local system_prompt = [[You are running inside a Neovim terminal (vim_leetcode_a
 Pipe JSON to launch_slideshow.sh --stdin:
   {"slides":[{"content":"Explanation text","lines":[1,2,3]}]}
 
-## Visual Animations (diagrams, ASCII art, box drawing)
-For VISUAL animations (not just text), copy and modify the template:
+## Visual Animations (bar charts, trees, grids, diagrams)
+For VISUAL animations, copy the template and BE CREATIVE:
   cp ]] .. plugin_dir .. [[templates/animation.lua ]] .. temp_dir .. [[/anim.lua
-Then edit FRAMES array with your visuals (use box drawing: ┌─┐│└─┘, arrows: ↑↓←→, colors via ANSI)
-Launch with: ]] .. plugin_dir .. [[scripts/run_tool.sh nvim -l ]] .. temp_dir .. [[/anim.lua
+The template has an example bar chart - DELETE it and create visuals appropriate to YOUR algorithm:
+  - Sorting: bar charts with colored bars showing comparisons/swaps
+  - Trees: ASCII tree structures with highlighted traversal paths
+  - Graphs: node/edge diagrams showing visited nodes
+  - DP: 2D grids/tables that fill in progressively
+  - Linked lists: [A]→[B]→[C] box diagrams
+Use ANSI colors to show state! If it could be plain text, use a slideshow instead.
+IMPORTANT: Open the code file first (open_file.sh) so users see code alongside the animation.
+Each frame has a `lines` array - use it to highlight the corresponding code lines!
+Launch: ]] .. plugin_dir .. [[scripts/run_tool.sh nvim -l ]] .. temp_dir .. [[/anim.lua
 Controls: space/n=next, p=prev, r=restart, q=quit
+Note: You're not limited to this template! run_tool.sh can run ANY program (Python, etc.)
+You could even write a video game or fully interactive visualization in the tool pane.
 
 ## Highlighting Code (for custom tools)
   nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').set_lines({5,6,7})\")"
