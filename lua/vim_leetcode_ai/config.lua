@@ -45,7 +45,8 @@ Pipe JSON to launch_slideshow.sh --stdin:
 
 ## Visual Animations (bar charts, trees, grids, diagrams)
 For VISUAL animations, BE CREATIVE! See examples:
-  - ]] .. plugin_dir .. [[tests/fixtures/triforce_demo.py: 3D carousel with plasma, fluid sim, Mandelbrot over starfield
+  - ]] .. plugin_dir .. [[tests/fixtures/triforce_demo.py: 3D carousel with plasma, fluid sim, Mandelbrot (braille rendering)
+  - ]] .. plugin_dir .. [[tests/fixtures/flyover_demo.py: Mode 7 terrain flyover with glider physics (braille rendering)
   - ]] .. plugin_dir .. [[tests/fixtures/quicksort_animation.py: Bar chart visualization with colored comparisons
 For simpler animations, copy the Lua template:
   cp ]] .. plugin_dir .. [[templates/animation.lua ]] .. temp_dir .. [[/anim.lua
