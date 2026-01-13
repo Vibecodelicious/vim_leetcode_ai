@@ -12,8 +12,9 @@ Use this when the user asks you to explain code, debug issues, or walk through a
    ```
    This returns the current contents of the code editor (including unsaved changes).
 
-2. **Create slideshow JSON** and write to `/tmp/slideshow.json`:
-   ```json
+2. **Create and launch slideshow** by piping JSON to the launch script:
+   ```bash
+   cat << 'EOF' | ./scripts/launch_slideshow.sh --stdin
    {
      "slides": [
        {
@@ -22,14 +23,10 @@ Use this when the user asks you to explain code, debug issues, or walk through a
        }
      ]
    }
+   EOF
    ```
    - `content`: Your explanation (newlines OK)
    - `lines`: Line numbers to highlight (1-indexed)
-
-3. **Launch the slideshow:**
-   ```bash
-   ./scripts/launch_slideshow.sh /tmp/slideshow.json
-   ```
 
 ## Slide Guidelines
 
@@ -56,8 +53,8 @@ User: "This loop isn't terminating, why?"
 ./scripts/get_code_file.sh
 # Returns the buffer contents directly
 
-# 2. Analyze and create slides, write to /tmp/slideshow.json
-
-# 3. Launch
-./scripts/launch_slideshow.sh /tmp/slideshow.json
+# 2. Analyze and launch slideshow (pipe JSON directly)
+cat << 'EOF' | ./scripts/launch_slideshow.sh --stdin
+{"slides":[{"content":"The issue is...","lines":[5,6,7]}]}
+EOF
 ```
