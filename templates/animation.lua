@@ -29,6 +29,9 @@
 -- NOTE: You're not limited to this framework! run_tool.sh can run ANY program.
 -- You could write a Python script, a video game, or a fully custom interactive
 -- visualization - whatever best explains the concept!
+--
+-- WARNING: In raw terminal mode, use io.write() NOT print()!
+-- print() won't render ANSI codes correctly. Use the write_line() helper below.
 -- ============================================================================
 
 -- ANSI color codes (add more as needed)

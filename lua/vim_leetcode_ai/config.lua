@@ -35,13 +35,19 @@ local system_prompt = [[You are running inside a Neovim terminal (vim_leetcode_a
 - NEVER use vim/nvim directly to open files - use open_file.sh
 - NEVER use os.system('clear') in tools - use print('\033[2J\033[H', end='')
 - Use \r\n for line breaks in tool pane (raw terminal mode)
+- In Lua raw mode: use io.write() NOT print() - print() breaks ANSI rendering
 
-## Slideshow (text explanations with code highlighting)
+## Slideshow (TEXT-ONLY explanations with code highlighting)
+Use ONLY for text explanations - NOT for demos, animations, or visualizations!
+If user asks for "demo", "animation", "visualization", or anything visual → use run_tool.sh instead.
 Pipe JSON to launch_slideshow.sh --stdin:
   {"slides":[{"content":"Explanation text","lines":[1,2,3]}]}
 
 ## Visual Animations (bar charts, trees, grids, diagrams)
-For VISUAL animations, copy the template and BE CREATIVE:
+For VISUAL animations, BE CREATIVE! See examples:
+  - ]] .. plugin_dir .. [[tests/fixtures/triforce_demo.py: 3D carousel with plasma, fluid sim, Mandelbrot over starfield
+  - ]] .. plugin_dir .. [[tests/fixtures/quicksort_animation.py: Bar chart visualization with colored comparisons
+For simpler animations, copy the Lua template:
   cp ]] .. plugin_dir .. [[templates/animation.lua ]] .. temp_dir .. [[/anim.lua
 The template has an example bar chart - DELETE it and create visuals appropriate to YOUR algorithm:
   - Sorting: bar charts with colored bars showing comparisons/swaps
