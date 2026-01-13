@@ -1,0 +1,38 @@
+# Neovim/Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Lua
+*.luac
+luacov.stats.out
+luacov.report.out
+
+# Test artifacts
+.tests/
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Environment
+.env
+.env.*
+
+# Dependencies (if using luarocks locally)
+lua_modules/
+.luarocks/
+
+# Build artifacts
+dist/
+build/
+
+# Vendor (cloned repos for reference)
+vendor/

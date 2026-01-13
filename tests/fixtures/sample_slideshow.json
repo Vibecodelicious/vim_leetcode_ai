@@ -1,0 +1,28 @@
+{
+  "slides": [
+    {
+      "content": "Welcome to the Two Sum Algorithm!\n\nThis classic LeetCode problem asks us to find two numbers\nin an array that add up to a target value.",
+      "lines": [1, 2]
+    },
+    {
+      "content": "Step 1: Create a Hash Map\n\nWe use a dictionary called 'seen' to store numbers\nwe've already encountered and their indices.",
+      "lines": [3]
+    },
+    {
+      "content": "Step 2: Iterate Through the Array\n\nFor each number, we calculate its complement\n(target - current number).",
+      "lines": [4, 5]
+    },
+    {
+      "content": "Step 3: Check for Complement\n\nIf the complement exists in our hash map,\nwe found our answer!",
+      "lines": [6, 7]
+    },
+    {
+      "content": "Step 4: Store Current Number\n\nOtherwise, store the current number and its index\nfor future lookups.",
+      "lines": [8]
+    },
+    {
+      "content": "Time Complexity: O(n)\nSpace Complexity: O(n)\n\nThis is much better than the O(n^2) brute force approach!",
+      "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    }
+  ]
+}
