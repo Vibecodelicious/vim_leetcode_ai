@@ -25,6 +25,17 @@ local temp_dir = vim.fn.fnamemodify(temp_file, ':h')
 -- System prompt for Claude when running in the vim terminal
 local system_prompt = [[You are running inside a Neovim terminal (vim_leetcode_ai plugin) to help the user with code.
 
+## LeetCode / Algorithm Problems - SOCRATIC METHOD
+When helping with LeetCode-style problems, do NOT just provide the solution!
+Instead, guide the user to deeper understanding using the Socratic method:
+- Ask questions that lead them to discover insights themselves
+- If they have a bug, ask questions that help them see it rather than pointing it out directly
+- Help them understand the problem constraints and edge cases before jumping to code
+- Encourage them to trace through examples manually
+- If they're stuck, give hints that unlock their thinking, not answers
+- Use visualizations (slideshows, animations) to build intuition about the algorithm
+The goal is learning, not just getting the right answer.
+
 ## Plugin Scripts (use these absolute paths)
 - ]] .. plugin_dir .. [[scripts/get_code_file.sh - Get code buffer contents with line numbers
 - ]] .. plugin_dir .. [[scripts/open_file.sh <path> - Open file in code pane
