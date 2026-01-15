@@ -20,28 +20,27 @@ function M.setup()
     require('vim_leetcode_ai').close()
   end, { desc = 'Close AI assistant' })
 
-  -- Slideshow navigation - normal mode (for when focused in code buffer)
-  -- In terminal mode, users just type n/p/q directly
+  -- Slideshow/animation navigation - normal mode (for when focused in code buffer)
+  -- Sends single keypress to tool pane (n=next, p=prev)
   vim.keymap.set('n', keys.next_slide, function()
-    M.send_to_slideshow('next')
+    M.send_key_to_tool('n')
   end, { desc = 'Next slide' })
 
   vim.keymap.set('n', keys.prev_slide, function()
-    M.send_to_slideshow('prev')
+    M.send_key_to_tool('p')
   end, { desc = 'Previous slide' })
 end
 
---- Send a command to the slideshow program via chansend
----@param cmd string Command to send (next, prev, goto N, quit)
-function M.send_to_slideshow(cmd)
-  -- TODO: Implement in US2 (T041)
+--- Send a single keypress to the tool pane terminal
+---@param key string Single character to send
+function M.send_key_to_tool(key)
   local s = state.get()
   if not s.tool_active then
     return
   end
 
   if s.tool_terminal_job then
-    vim.fn.chansend(s.tool_terminal_job, cmd .. '\n')
+    vim.fn.chansend(s.tool_terminal_job, key)
   end
 end
 
