@@ -310,33 +310,46 @@ def main():
             G = np.full((vrows, cols), BG_SPACE[1])
             B = np.full((vrows, cols), BG_SPACE[2])
 
-            # Render shapes back-to-front
-            for shape_type, (cx, cy, depth, scale) in shape_data:
+            # Occlusion culling: render front-to-back, skip already-filled pixels
+            filled = np.zeros((vrows, cols), dtype=bool)
+
+            # Reverse sort: front-to-back (highest depth first)
+            for shape_type, (cx, cy, depth, scale) in reversed(shape_data):
                 size = base_size * scale
 
                 if shape_type == 'circle':
-                    mask = circle_mask(X_grid, Y_grid, cx, cy, size / 2)
-                    if np.any(mask):
-                        r, g, b = get_ns_color_vec(X_grid, Y_grid, t, cx, cy, size)
-                        R[mask] = r[mask]
-                        G[mask] = g[mask]
-                        B[mask] = b[mask]
+                    shape_mask = circle_mask(X_grid, Y_grid, cx, cy, size / 2)
+                    visible = shape_mask & ~filled  # Only pixels not already covered
+                    if np.any(visible):
+                        # Only compute colors for visible pixels
+                        X_vis, Y_vis = X_grid[visible], Y_grid[visible]
+                        r, g, b = get_ns_color_vec(X_vis, Y_vis, t, cx, cy, size)
+                        R[visible] = r
+                        G[visible] = g
+                        B[visible] = b
+                        filled |= shape_mask
 
                 elif shape_type == 'square':
-                    mask = square_mask(X_grid, Y_grid, cx, cy, size)
-                    if np.any(mask):
-                        r, g, b = plasma_vec(X_grid, Y_grid / 2, t, cols, rows)
-                        R[mask] = r[mask]
-                        G[mask] = g[mask]
-                        B[mask] = b[mask]
+                    shape_mask = square_mask(X_grid, Y_grid, cx, cy, size)
+                    visible = shape_mask & ~filled
+                    if np.any(visible):
+                        X_vis, Y_vis = X_grid[visible], Y_grid[visible]
+                        r, g, b = plasma_vec(X_vis, Y_vis / 2, t, cols, rows)
+                        R[visible] = r
+                        G[visible] = g
+                        B[visible] = b
+                        filled |= shape_mask
 
                 elif shape_type == 'triangle':
-                    mask = triangle_mask(X_grid, Y_grid, cx, cy, size)
-                    if np.any(mask):
-                        r, g, b = mandelbrot_vec(X_grid, Y_grid / 2, t, cx, cy / 2, size / 2)
-                        R[mask] = r[mask]
-                        G[mask] = g[mask]
-                        B[mask] = b[mask]
+                    shape_mask = triangle_mask(X_grid, Y_grid, cx, cy, size)
+                    visible = shape_mask & ~filled
+                    if np.any(visible):
+                        X_vis, Y_vis = X_grid[visible], Y_grid[visible]
+                        r, g, b = mandelbrot_vec(X_vis, Y_vis / 2, t, cx, cy / 2, size / 2)
+                        R[visible] = r
+                        G[visible] = g
+                        B[visible] = b
+                        filled |= shape_mask
 
             # Convert to 0-255
             R = (R * 255).astype(int)
