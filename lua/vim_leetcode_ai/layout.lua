@@ -114,7 +114,7 @@ function M.close()
     end
   end
 
-  -- Close tool window first, then AI window (keep buffers for restore)
+  -- Close tool window first, then AI window
   safe_close(s.tool_window)
   safe_close(s.ai_window)
 
@@ -129,26 +129,6 @@ function M.close()
   -- Clear highlights
   local highlight = require('vim_leetcode_ai.highlight')
   highlight.clear()
-end
-
---- Restore the layout from hidden buffers
-function M.restore()
-  local s = state.get()
-
-  -- If we have existing terminal buffers, restore them
-  if s.ai_terminal_buf and vim.api.nvim_buf_is_valid(s.ai_terminal_buf) then
-    -- Create layout structure first
-    M.create()
-
-    -- Replace the new AI buffer with the existing one
-    local new_state = state.get()
-    if new_state.ai_window and vim.api.nvim_win_is_valid(new_state.ai_window) then
-      vim.api.nvim_win_set_buf(new_state.ai_window, s.ai_terminal_buf)
-    end
-  else
-    -- No existing session, create fresh
-    M.create()
-  end
 end
 
 --- Get the size of the tool output pane
