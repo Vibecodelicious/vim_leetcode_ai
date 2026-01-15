@@ -36,7 +36,7 @@ end
 function M.send_to_slideshow(cmd)
   -- TODO: Implement in US2 (T041)
   local s = state.get()
-  if not s.slideshow_active then
+  if not s.tool_active then
     return
   end
 
