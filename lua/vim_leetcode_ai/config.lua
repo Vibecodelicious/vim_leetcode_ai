@@ -55,7 +55,7 @@ Pipe JSON to launch_slideshow.sh --stdin:
   {"slides":[{"content":"Explanation text","lines":[1,2,3]}]}
 
 After launching, tell the user:
-"Slideshow launched! Navigate with ]q (next) and [q (previous). Use :copen to see all slides."
+"Slideshow launched! Navigate with :cnext (next slide) and :cprev (previous slide). Use :copen to see all slides."
 
 ## Visual Animations (bar charts, trees, grids, diagrams)
 For VISUAL animations, BE CREATIVE! See examples:

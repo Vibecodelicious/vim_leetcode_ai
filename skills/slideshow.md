@@ -39,11 +39,12 @@ Use this when the user asks you to explain code, debug issues, or walk through a
 ## User Navigation
 
 The slideshow uses Vim's native quickfix list for navigation:
-- `]q` - Next slide (standard quickfix next)
-- `[q` - Previous slide (standard quickfix previous)
-- `:cnext` / `:cprev` - Alternative navigation commands
+- `:cnext` - Next slide
+- `:cprev` - Previous slide
 - `:cc 3` - Jump to slide 3
-- The quickfix list can be opened with `:copen` to see all slides
+- `:copen` - View all slides in the quickfix window
+
+Common keybindings (if not remapped): `]q` (next), `[q` (previous)
 
 The slide content is displayed in the tool pane, and the code buffer automatically highlights the relevant lines as the user navigates.
 
@@ -64,5 +65,5 @@ EOF
 
 **After launching, tell the user:**
 ```
-Slideshow launched! Navigate with ]q (next) and [q (previous). Use :copen to see all slides.
+Slideshow launched! Navigate with :cnext (next slide) and :cprev (previous slide). Use :copen to see all slides.
 ```
