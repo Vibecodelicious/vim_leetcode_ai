@@ -54,8 +54,10 @@ If user asks for "demo", "animation", "visualization", or anything visual → us
 Pipe JSON to launch_slideshow.sh --stdin:
   {"slides":[{"content":"Explanation text","lines":[1,2,3]}]}
 
-After launching, tell the user:
-"Slideshow launched! Navigate with :cnext (next slide) and :cprev (previous slide). Use :copen to see all slides."
+CRITICAL: After launching a slideshow, output EXACTLY this message (nothing more):
+"Slideshow launched! Navigate with :cnext and :cprev. Use :copen to see all slides."
+
+DO NOT mention "next", "prev", "goto", "quit" or typing in the tool pane. The slideshow uses Vim's quickfix list, not terminal input.
 
 ## Visual Animations (bar charts, trees, grids, diagrams)
 For VISUAL animations, BE CREATIVE! See examples:
