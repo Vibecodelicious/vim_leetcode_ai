@@ -84,7 +84,7 @@ local function highlight_lines(lines)
 
   local lines_str = '{' .. table.concat(lines, ',') .. '}'
   os.execute(string.format(
-    'nvim --server "%s" --remote-expr "luaeval(\\"require(\'vim_leetcode_ai.highlight\').set_lines(%s)\\")" 2>/dev/null',
+    'nvim --server "%s" --remote-send "<Cmd>lua require(\'vim_leetcode_ai.highlight\').set_lines(%s)<CR>" 2>/dev/null',
     nvim_socket, lines_str
   ))
 end
@@ -95,7 +95,7 @@ local function clear_highlights()
   if not nvim_socket then return end
 
   os.execute(string.format(
-    'nvim --server "%s" --remote-expr "luaeval(\\"require(\'vim_leetcode_ai.highlight\').clear()\\")" 2>/dev/null',
+    'nvim --server "%s" --remote-send "<Cmd>lua require(\'vim_leetcode_ai.highlight\').clear()<CR>" 2>/dev/null',
     nvim_socket
   ))
 end

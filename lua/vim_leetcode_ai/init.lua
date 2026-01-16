@@ -24,6 +24,29 @@ end
 function M.setup(opts)
   config.setup(opts)
   keybindings.setup()
+
+  -- Setup autocmd to clean up jobs when vim exits
+  local group = vim.api.nvim_create_augroup('VimLeetcodeAICleanup', { clear = true })
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    group = group,
+    callback = function()
+      -- Stop all running jobs to prevent orphaned processes
+      local s = state.get()
+      if s.ai_terminal_job then
+        vim.fn.jobstop(s.ai_terminal_job)
+      end
+      if s.tool_terminal_job then
+        vim.fn.jobstop(s.tool_terminal_job)
+      end
+      if s.quickfix_timer then
+        pcall(function()
+          s.quickfix_timer:stop()
+          s.quickfix_timer:close()
+        end)
+      end
+    end,
+  })
+
   setup_called = true
 end
 

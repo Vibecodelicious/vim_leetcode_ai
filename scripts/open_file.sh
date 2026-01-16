@@ -29,15 +29,17 @@ fi
 # 2. Switches to that window
 # 3. Opens the file
 # 4. Updates the code_buffer in state
-nvim --server "$NVIM" --remote-expr "luaeval(\"(function()
-  local state = require('vim_leetcode_ai.state')
-  local s = state.get()
-  if s.code_window and vim.api.nvim_win_is_valid(s.code_window) then
-    vim.api.nvim_set_current_win(s.code_window)
-    vim.cmd('edit ' .. vim.fn.fnameescape([[${FILE_PATH}]]))
-    state.update({ code_buffer = vim.api.nvim_get_current_buf() })
-    return 'ok'
-  else
-    return 'error: code window not found'
-  end
-end)()\")"
+# Write Lua to temp file to avoid escaping issues and prevent return value display
+TEMP_LUA="$(mktemp --suffix=.lua)"
+cat > "$TEMP_LUA" <<'LUA_EOF'
+local state = require('vim_leetcode_ai.state')
+local s = state.get()
+if s.code_window and vim.api.nvim_win_is_valid(s.code_window) then
+  vim.api.nvim_set_current_win(s.code_window)
+  vim.cmd('edit ' .. vim.fn.fnameescape('${FILE_PATH}'))
+  state.update({ code_buffer = vim.api.nvim_get_current_buf() })
+end
+LUA_EOF
+
+nvim --server "$NVIM" --remote-send "<Cmd>luafile $TEMP_LUA<CR>" 2>/dev/null
+rm -f "$TEMP_LUA"

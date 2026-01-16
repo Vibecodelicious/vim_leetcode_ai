@@ -17,6 +17,8 @@ local M = {}
 ---@field tool_stale boolean Whether the tool output is stale (code modified)
 ---@field current_slide number|nil Current slide index (1-indexed)
 ---@field total_slides number|nil Total number of slides
+---@field quickfix_content_buf number|nil Buffer ID for quickfix slideshow content display
+---@field quickfix_timer table|nil Timer handle for quickfix position monitoring
 
 ---@type VimLeetcodeAIState
 local state = {
@@ -34,6 +36,8 @@ local state = {
   tool_stale = false,
   current_slide = nil,
   total_slides = nil,
+  quickfix_content_buf = nil,
+  quickfix_timer = nil,
 }
 
 --- Get the current state
@@ -51,6 +55,7 @@ function M.update(updates)
     'tool_terminal_job', 'tool_terminal_buf', 'code_buffer',
     'code_window', 'tool_window', 'ai_window', 'highlight_ns',
     'tool_active', 'tool_stale', 'current_slide', 'total_slides',
+    'quickfix_content_buf', 'quickfix_timer',
   }
   local valid_set = {}
   for _, k in ipairs(valid_keys) do
@@ -79,6 +84,8 @@ function M.reset()
   state.tool_stale = false
   state.current_slide = nil
   state.total_slides = nil
+  state.quickfix_content_buf = nil
+  state.quickfix_timer = nil
 end
 
 return M

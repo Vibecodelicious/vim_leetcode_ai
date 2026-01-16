@@ -38,11 +38,14 @@ Use this when the user asks you to explain code, debug issues, or walk through a
 
 ## User Navigation
 
-The user types in the tool pane:
-- `n` or `next` - Next slide
-- `p` or `prev` - Previous slide
-- `q` or `quit` - Exit
-- `3` or `goto 3` - Jump to slide 3
+The slideshow uses Vim's native quickfix list for navigation:
+- `]q` - Next slide (standard quickfix next)
+- `[q` - Previous slide (standard quickfix previous)
+- `:cnext` / `:cprev` - Alternative navigation commands
+- `:cc 3` - Jump to slide 3
+- The quickfix list can be opened with `:copen` to see all slides
+
+The slide content is displayed in the tool pane, and the code buffer automatically highlights the relevant lines as the user navigates.
 
 ## Example Flow
 

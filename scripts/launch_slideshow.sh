@@ -41,6 +41,30 @@ else
     exit 1
 fi
 
-# Send command to parent Neovim to launch slideshow in tool pane
-# Using --remote-expr with luaeval() and [[...]] strings to avoid quote escaping issues
-nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.terminal').launch_in_tool_pane([[nvim -l $PLUGIN_DIR/lua/slideshow/main.lua --file $SLIDESHOW_FILE]])\")"
+# Read the slideshow JSON file
+SLIDESHOW_JSON=$(cat "$SLIDESHOW_FILE" 2>/dev/null)
+if [ -z "$SLIDESHOW_JSON" ]; then
+    echo "Error: Failed to read slideshow file"
+    exit 1
+fi
+
+# Use base64 encoding to avoid shell escaping issues
+ENCODED_JSON=$(echo -n "$SLIDESHOW_JSON" | base64 -w0)
+
+# Send command to parent Neovim to launch quickfix slideshow
+# Write Lua command to temp file to avoid escaping issues and command-line display
+TEMP_LUA="$(mktemp --suffix=.lua)"
+cat > "$TEMP_LUA" <<EOF
+require('vim_leetcode_ai.terminal').launch_quickfix_slideshow_b64('$ENCODED_JSON')
+EOF
+
+# Execute the Lua file in parent Neovim (silently)
+nvim --server "$NVIM" --remote-send "<Cmd>luafile $TEMP_LUA<CR>" 2>/dev/null
+
+# Clean up
+rm -f "$TEMP_LUA"
+
+# Clean up temp file if it was created
+if [ "$1" = "--data" ] || [ "$1" = "--stdin" ]; then
+    rm -f "$SLIDESHOW_FILE"
+fi

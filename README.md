@@ -197,6 +197,12 @@ Slideshows are JSON-based interactive presentations:
 
 Lines are automatically highlighted in your code editor as you navigate through slides.
 
+**Navigation**: Slideshows use Vim's native quickfix list, so you navigate with:
+- `]q` — Next slide
+- `[q` — Previous slide
+- `:copen` — View all slides in the quickfix window
+- `:cc 3` — Jump to slide 3
+
 ### Socratic Method Coaching
 
 The built-in system prompt guides users toward solutions:

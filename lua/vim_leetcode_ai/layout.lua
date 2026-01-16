@@ -46,6 +46,39 @@ function M.create()
     ai_window = ai_win,
   })
 
+  -- Setup autocmd to stop jobs when windows are closed
+  local group = vim.api.nvim_create_augroup('VimLeetcodeAIWindowClose', { clear = true })
+
+  -- Watch for AI window close
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = group,
+    callback = function(args)
+      local closed_win = tonumber(args.match)
+      local s = state.get()
+
+      -- If AI window was closed, stop the AI job
+      if closed_win == s.ai_window then
+        if s.ai_terminal_job then
+          vim.fn.jobstop(s.ai_terminal_job)
+          state.update({ ai_terminal_job = nil })
+        end
+      end
+
+      -- If tool window was closed, stop the tool job
+      if closed_win == s.tool_window then
+        if s.tool_terminal_job then
+          vim.fn.jobstop(s.tool_terminal_job)
+          state.update({ tool_terminal_job = nil })
+        end
+        if s.quickfix_timer then
+          s.quickfix_timer:stop()
+          s.quickfix_timer:close()
+          state.update({ quickfix_timer = nil })
+        end
+      end
+    end,
+  })
+
   -- Focus back on code window
   vim.api.nvim_set_current_win(code_win)
 end
@@ -107,6 +140,20 @@ function M.close()
     return
   end
 
+  -- Stop all running jobs first
+  if s.ai_terminal_job then
+    vim.fn.jobstop(s.ai_terminal_job)
+  end
+  if s.tool_terminal_job then
+    vim.fn.jobstop(s.tool_terminal_job)
+  end
+
+  -- Stop quickfix timer if it exists
+  if s.quickfix_timer then
+    s.quickfix_timer:stop()
+    s.quickfix_timer:close()
+  end
+
   -- Helper to safely close a window (can't close last window)
   local function safe_close(win)
     if win and vim.api.nvim_win_is_valid(win) and vim.fn.winnr('$') > 1 then
@@ -118,17 +165,15 @@ function M.close()
   safe_close(s.tool_window)
   safe_close(s.ai_window)
 
-  -- Update state
-  state.update({
-    layout_open = false,
-    tool_window = nil,
-    ai_window = nil,
-    code_window = nil,
-  })
-
   -- Clear highlights
   local highlight = require('vim_leetcode_ai.highlight')
   highlight.clear()
+
+  -- Clear autocmd group
+  pcall(vim.api.nvim_del_augroup_by_name, 'VimLeetcodeAIWindowClose')
+
+  -- Reset state
+  state.reset()
 end
 
 --- Get the size of the tool output pane

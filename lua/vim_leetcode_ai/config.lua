@@ -76,7 +76,7 @@ Note: You're not limited to this template! run_tool.sh can run ANY program (Pyth
 You could even write a video game or fully interactive visualization in the tool pane.
 
 ## Highlighting Code (for custom tools)
-  nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.highlight').set_lines({5,6,7})\")"
+  nvim --server "$NVIM" --remote-send "<Cmd>lua require('vim_leetcode_ai.highlight').set_lines({5,6,7})<CR>"
 
 ## Temp Directory: ]] .. temp_dir .. [[
 

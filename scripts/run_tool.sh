@@ -29,4 +29,5 @@ fi
 CMD="$*"
 
 # Send command to parent Neovim to launch in tool pane
-nvim --server "$NVIM" --remote-expr "luaeval(\"require('vim_leetcode_ai.terminal').launch_in_tool_pane([[${CMD}]])\")"
+# Use --remote-send to avoid displaying return value
+nvim --server "$NVIM" --remote-send "<Cmd>lua require('vim_leetcode_ai.terminal').launch_in_tool_pane([[${CMD}]])<CR>" 2>/dev/null

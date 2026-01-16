@@ -36,6 +36,9 @@ function M.spawn_ai_agent(win)
   -- Get the buffer that was created
   local buf = vim.api.nvim_get_current_buf()
 
+  -- Set a clean buffer name (termopen uses the command as the name, which is too long)
+  pcall(vim.api.nvim_buf_set_name, buf, 'vim_leetcode_ai://ai_terminal')
+
   -- Update state
   state.update({
     ai_terminal_job = job_id,
@@ -186,6 +189,62 @@ function M.launch_in_tool_pane(cmd)
   vim.api.nvim_set_current_win(current_win)
 
   return job_id
+end
+
+--- Decode base64 string (simple implementation)
+---@param encoded string Base64 encoded string
+---@return string Decoded string
+local function decode_base64(encoded)
+  -- Use printf to decode base64 via shell
+  local handle = io.popen('printf "%s" "' .. encoded:gsub('"', '\\"') .. '" | base64 -d 2>/dev/null', 'r')
+  if not handle then
+    return nil
+  end
+  local result = handle:read('*a')
+  handle:close()
+  return result
+end
+
+--- Launch a quickfix-based slideshow from base64-encoded JSON
+---@param encoded_json string Base64-encoded JSON string
+---@return boolean success Whether the slideshow was launched
+function M.launch_quickfix_slideshow_b64(encoded_json)
+  local parser = require('slideshow.parser')
+  local quickfix_slideshow = require('vim_leetcode_ai.quickfix_slideshow')
+
+  -- Decode base64
+  local slideshow_json = decode_base64(encoded_json)
+  if not slideshow_json or slideshow_json == '' then
+    vim.notify('Failed to decode slideshow data', vim.log.levels.ERROR)
+    return false
+  end
+
+  -- Parse the JSON
+  local slideshow_data, err = parser.parse_json(slideshow_json)
+  if not slideshow_data then
+    vim.notify('Failed to parse slideshow: ' .. err, vim.log.levels.ERROR)
+    return false
+  end
+
+  -- Launch the quickfix slideshow
+  return quickfix_slideshow.launch(slideshow_data)
+end
+
+--- Launch a quickfix-based slideshow
+---@param slideshow_json string JSON string containing slideshow data
+function M.launch_quickfix_slideshow(slideshow_json)
+  local parser = require('slideshow.parser')
+  local quickfix_slideshow = require('vim_leetcode_ai.quickfix_slideshow')
+
+  -- Parse the JSON
+  local slideshow_data, err = parser.parse_json(slideshow_json)
+  if not slideshow_data then
+    vim.notify('Failed to parse slideshow: ' .. err, vim.log.levels.ERROR)
+    return false
+  end
+
+  -- Launch the quickfix slideshow
+  return quickfix_slideshow.launch(slideshow_data)
 end
 
 return M
