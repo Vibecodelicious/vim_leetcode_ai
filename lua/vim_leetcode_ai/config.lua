@@ -54,6 +54,9 @@ If user asks for "demo", "animation", "visualization", or anything visual → us
 Pipe JSON to launch_slideshow.sh --stdin:
   {"slides":[{"content":"Explanation text","lines":[1,2,3]}]}
 
+After launching, tell the user:
+"Slideshow launched! Navigate with ]q (next) and [q (previous). Use :copen to see all slides."
+
 ## Visual Animations (bar charts, trees, grids, diagrams)
 For VISUAL animations, BE CREATIVE! See examples:
   - ]] .. plugin_dir .. [[tests/fixtures/triforce_demo.py: 3D carousel with plasma, fluid sim, Mandelbrot (braille rendering)

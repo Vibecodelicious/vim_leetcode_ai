@@ -61,3 +61,8 @@ cat << 'EOF' | ./scripts/launch_slideshow.sh --stdin
 {"slides":[{"content":"The issue is...","lines":[5,6,7]}]}
 EOF
 ```
+
+**After launching, tell the user:**
+```
+Slideshow launched! Navigate with ]q (next) and [q (previous). Use :copen to see all slides.
+```
