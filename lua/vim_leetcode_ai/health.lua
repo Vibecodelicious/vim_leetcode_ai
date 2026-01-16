@@ -60,26 +60,26 @@ function M.check()
     end
   end
 
-  -- Check slideshow modules
-  local slideshow_modules = {
-    'slideshow.parser',
-    'slideshow.navigation',
-    'slideshow.rpc_client',
-    'slideshow.tui',
-    'slideshow.main',
-    'slideshow.query',
-  }
+  -- Check slideshow parser module (still used by quickfix slideshow)
+  local ok, err = pcall(require, 'slideshow.parser')
+  if ok then
+    vim.health.ok('Slideshow parser module loaded')
+  else
+    vim.health.warn('Failed to load slideshow parser module', {
+      'This may affect slideshow functionality',
+      'Error: ' .. tostring(err),
+    })
+  end
 
-  for _, mod in ipairs(slideshow_modules) do
-    local ok, err = pcall(require, mod)
-    if ok then
-      vim.health.ok('Slideshow module loaded: ' .. mod)
-    else
-      vim.health.warn('Failed to load slideshow module: ' .. mod, {
-        'This may affect slideshow functionality',
-        'Error: ' .. tostring(err),
-      })
-    end
+  -- Check quickfix slideshow module
+  ok, err = pcall(require, 'vim_leetcode_ai.quickfix_slideshow')
+  if ok then
+    vim.health.ok('Quickfix slideshow module loaded')
+  else
+    vim.health.warn('Failed to load quickfix slideshow module', {
+      'This may affect slideshow functionality',
+      'Error: ' .. tostring(err),
+    })
   end
 
   -- Check current state

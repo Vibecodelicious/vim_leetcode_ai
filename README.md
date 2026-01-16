@@ -132,15 +132,11 @@ vim_leetcode_ai/
 │   │   ├── layout.lua          # Three-pane layout creation
 │   │   ├── terminal.lua        # AI agent terminal
 │   │   ├── highlight.lua       # Code line highlighting
+│   │   ├── quickfix_slideshow.lua  # Quickfix-based slideshow
 │   │   ├── keybindings.lua     # Vim keybindings setup
 │   │   └── health.lua          # Health check diagnostics
-│   └── slideshow/              # Slideshow program (runs via `nvim -l`)
-│       ├── main.lua            # Entry point
-│       ├── navigation.lua      # Slide navigation
-│       ├── rpc_client.lua      # RPC to parent Neovim
-│       ├── tui.lua             # Terminal UI rendering
-│       ├── parser.lua          # JSON parsing
-│       └── query.lua           # Buffer queries
+│   └── slideshow/              # Slideshow utilities
+│       └── parser.lua          # JSON parsing
 ├── plugin/
 │   └── vim_leetcode_ai.vim     # Vimscript entry point
 ├── scripts/                    # Helper shell scripts
@@ -297,17 +293,17 @@ Claude (response):
 - **`state.lua`** — Tracks global state (window IDs, buffer IDs, layout status)
 - **`keybindings.lua`** — Sets up Vim keybindings for navigation
 
-### Slideshow Program
+### Quickfix-based Slideshow
 
-The slideshow runs as a standalone `nvim -l` Lua script that:
+Slideshows use Vim's native quickfix list for navigation:
 
-1. Parses JSON slide data
-2. Renders slides in the terminal
-3. Communicates via RPC to the parent Neovim instance
-4. Sends highlight commands for code lines
-5. Receives navigation commands (next, prev, goto) from stdin
+1. Parses JSON slide data and populates quickfix entries
+2. Displays slide content in a regular buffer (tool pane)
+3. Updates code highlights automatically when quickfix position changes
+4. Navigation uses native `]q`/`[q` commands
+5. No terminal emulation needed - pure Vim buffers
 
-This design allows slideshows to run independently while maintaining editor integration.
+This design provides buttery-smooth, native Vim integration that feels natural.
 
 ## Project Principles
 
