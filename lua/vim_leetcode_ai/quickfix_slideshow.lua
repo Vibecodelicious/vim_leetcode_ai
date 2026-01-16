@@ -24,6 +24,48 @@ local function create_content_buffer()
   return buf
 end
 
+--- Detect keybindings for quickfix navigation
+---@return string|nil next_key Key mapped to :cnext (or nil)
+---@return string|nil prev_key Key mapped to :cprev (or nil)
+local function detect_quickfix_keys()
+  local keymaps = vim.api.nvim_get_keymap('n')
+  local next_key = nil
+  local prev_key = nil
+
+  for _, map in ipairs(keymaps) do
+    local rhs = map.rhs or ''
+    if rhs:match('cnext') then
+      next_key = map.lhs
+    elseif rhs:match('cprev') then
+      prev_key = map.lhs
+    end
+  end
+
+  return next_key, prev_key
+end
+
+--- Build navigation footer for slides
+---@param next_key string|nil Key mapped to :cnext
+---@param prev_key string|nil Key mapped to :cprev
+---@return string footer The footer text to append
+local function build_footer(next_key, prev_key)
+  local parts = {}
+
+  if prev_key then
+    table.insert(parts, 'Previous: ' .. prev_key .. ' or :cprev')
+  else
+    table.insert(parts, 'Previous: :cprev')
+  end
+
+  if next_key then
+    table.insert(parts, 'Next: ' .. next_key .. ' or :cnext')
+  else
+    table.insert(parts, 'Next: :cnext')
+  end
+
+  return '\n\n─────────────────\n' .. table.concat(parts, ' | ')
+end
+
 --- Update the content buffer with slide text
 ---@param buf number Buffer ID
 ---@param content string Slide content text
@@ -74,14 +116,19 @@ function M.launch(slideshow_data)
   -- Display content buffer in tool pane
   vim.api.nvim_win_set_buf(s.tool_window, content_buf)
 
-  -- Convert slides to quickfix entries
+  -- Detect keybindings and build footer
+  local next_key, prev_key = detect_quickfix_keys()
+  local footer = build_footer(next_key, prev_key)
+
+  -- Convert slides to quickfix entries with footer appended
   local qf_items = {}
   for i, slide in ipairs(slideshow_data.slides) do
+    local content_with_footer = slide.content .. footer
     table.insert(qf_items, {
       text = string.format('Slide %d: %s', i, slide.content:sub(1, 50):gsub('\n', ' ')),
       user_data = {
         slide_index = i,
-        content = slide.content,
+        content = content_with_footer,
         lines = slide.lines or {},
       }
     })

@@ -34,7 +34,9 @@ Use this when the user asks you to explain code, debug issues, or walk through a
    ```
 
 4. **Tell the user:**
-   After launching, output: "Slideshow launched! Navigate with :cnext/:cprev (or ]q/[q if mapped). Use :copen to see all slides."
+   After launching, simply say: "Slideshow launched!"
+
+   The slideshow automatically displays navigation instructions at the bottom of each slide.
 
 ## Slide Guidelines
 
@@ -46,13 +48,7 @@ Use this when the user asks you to explain code, debug issues, or walk through a
 
 ## User Navigation
 
-Slideshows use Vim's native quickfix list. Navigation commands:
-- `:cnext` - Next slide
-- `:cprev` - Previous slide
-- `:cc N` - Jump to slide N
-- `:copen` - View all slides in quickfix window
-
-Common keybindings (if not remapped): `]q` (next), `[q` (previous)
+Slideshows use Vim's native quickfix list. Each slide automatically displays navigation instructions at the bottom showing the user's keybindings (if mapped) and commands.
 
 ## Example Flow
 
@@ -69,5 +65,5 @@ cat << 'EOF' | ./scripts/launch_slideshow.sh --stdin
 EOF
 
 # 3. Tell the user
-# Output: "Slideshow launched! Navigate with :cnext and :cprev. Use :copen to see all slides."
+# Output: "Slideshow launched!"
 ```
