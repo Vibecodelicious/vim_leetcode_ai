@@ -34,7 +34,7 @@ Use this when the user asks you to explain code, debug issues, or walk through a
    ```
 
 4. **Tell the user:**
-   After launching, output: "Slideshow launched! Navigate with :cnext and :cprev. Use :copen to see all slides."
+   After launching, output: "Slideshow launched! Navigate with :cnext/:cprev (or ]q/[q if mapped). Use :copen to see all slides."
 
 ## Slide Guidelines
 

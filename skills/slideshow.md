@@ -65,5 +65,5 @@ EOF
 
 **After launching, tell the user:**
 ```
-Slideshow launched! Navigate with :cnext (next slide) and :cprev (previous slide). Use :copen to see all slides.
+Slideshow launched! Navigate with :cnext/:cprev (or ]q/[q if mapped). Use :copen to see all slides.
 ```
