@@ -26,7 +26,7 @@ An AI-assisted Neovim plugin for solving LeetCode problems with interactive slid
 #### With `lazy.nvim`:
 ```lua
 {
-  'basil/vim_leetcode_ai',
+  'Vibecodelicious/vim_leetcode_ai',
   config = function()
     require('vim_leetcode_ai').setup()
   end
@@ -36,7 +36,7 @@ An AI-assisted Neovim plugin for solving LeetCode problems with interactive slid
 #### With `packer.nvim`:
 ```lua
 use {
-  'basil/vim_leetcode_ai',
+  'Vibecodelicious/vim_leetcode_ai',
   config = function()
     require('vim_leetcode_ai').setup()
   end
@@ -45,7 +45,7 @@ use {
 
 #### With `vim-plug`:
 ```vim
-Plug 'basil/vim_leetcode_ai'
+Plug 'Vibecodelicious/vim_leetcode_ai'
 ```
 
 ## Quick Start
