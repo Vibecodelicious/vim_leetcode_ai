@@ -31,7 +31,7 @@ fi
 # 4. Updates the code_buffer in state
 # Write Lua to temp file to avoid escaping issues and prevent return value display
 TEMP_LUA="$(mktemp --suffix=.lua)"
-cat > "$TEMP_LUA" <<'LUA_EOF'
+cat > "$TEMP_LUA" <<LUA_EOF
 local state = require('vim_leetcode_ai.state')
 local s = state.get()
 if s.code_window and vim.api.nvim_win_is_valid(s.code_window) then

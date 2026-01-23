@@ -12,7 +12,7 @@ Use this when the user asks you to explain code, debug issues, or walk through a
    ```
    This returns the current contents of the code editor (including unsaved changes).
 
-2. **Create and launch slideshow** by piping JSON to the launch script:
+2. **Create and launch slideshow** by piping JSON to the script:
    ```bash
    cat << 'EOF' | ./scripts/launch_slideshow.sh --stdin
    {
@@ -28,6 +28,16 @@ Use this when the user asks you to explain code, debug issues, or walk through a
    - `content`: Your explanation (newlines OK)
    - `lines`: Line numbers to highlight (1-indexed)
 
+3. **Launch alternative** (using a file):
+   ```bash
+   ./scripts/launch_slideshow.sh /tmp/slideshow.json
+   ```
+
+4. **Tell the user:**
+   After launching, simply say: "Slideshow launched!"
+
+   The slideshow automatically displays navigation instructions at the bottom of each slide.
+
 ## Slide Guidelines
 
 - Start with an overview slide
@@ -38,9 +48,7 @@ Use this when the user asks you to explain code, debug issues, or walk through a
 
 ## User Navigation
 
-The slideshow uses Vim's native quickfix list for navigation. Each slide automatically displays navigation instructions at the bottom showing the user's keybindings (if mapped) and commands.
-
-The slide content is displayed in the tool pane, and the code buffer automatically highlights the relevant lines as the user navigates.
+Slideshows use Vim's native quickfix list. Each slide automatically displays navigation instructions at the bottom showing the user's keybindings (if mapped) and commands.
 
 ## Example Flow
 
@@ -53,13 +61,9 @@ User: "This loop isn't terminating, why?"
 
 # 2. Analyze and launch slideshow (pipe JSON directly)
 cat << 'EOF' | ./scripts/launch_slideshow.sh --stdin
-{"slides":[{"content":"The issue is...","lines":[5,6,7]}]}
+{"slides":[{"content":"The issue is on line 5...","lines":[5,6,7]}]}
 EOF
-```
 
-**After launching, tell the user:**
+# 3. Tell the user
+# Output: "Slideshow launched!"
 ```
-Slideshow launched!
-```
-
-(Navigation instructions are displayed automatically at the bottom of each slide.)

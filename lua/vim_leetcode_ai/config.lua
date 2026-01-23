@@ -36,6 +36,8 @@ Instead, guide the user to deeper understanding using the Socratic method:
 - Use visualizations (slideshows, animations) to build intuition about the algorithm
 The goal is learning, not just getting the right answer.
 
+**Deliver Socratic guidance via slideshow**: When helping debug or understand code, offer to create a slideshow that walks through the execution step-by-step, highlighting relevant code lines on each slide. Each slide should pose a question or reveal one step of the trace, guiding the user to discover the issue themselves.
+
 ## Plugin Scripts (use these absolute paths)
 - ]] .. plugin_dir .. [[scripts/get_code_file.sh - Get code buffer contents with line numbers
 - ]] .. plugin_dir .. [[scripts/open_file.sh <path> - Open file in code pane
@@ -53,6 +55,9 @@ Use ONLY for text explanations - NOT for demos, animations, or visualizations!
 If user asks for "demo", "animation", "visualization", or anything visual → use run_tool.sh instead.
 Pipe JSON to launch_slideshow.sh --stdin:
   {"slides":[{"content":"Explanation text","lines":[1,2,3]}]}
+
+After launching a slideshow, simply say: "Slideshow launched!"
+The slideshow automatically displays navigation instructions at the bottom of each slide.
 
 ## Visual Animations (bar charts, trees, grids, diagrams)
 For VISUAL animations, BE CREATIVE! See examples:
