@@ -12,7 +12,7 @@ Using lazy.nvim:
 
 ```lua
 {
-  "basil/vim_leetcode_ai",
+  "Vibecodelicious/vim_leetcode_ai",
   dependencies = { "ianding1/leetcode.vim" },
   config = function()
     require("vim_leetcode_ai").setup({
@@ -26,7 +26,7 @@ Using packer.nvim:
 
 ```lua
 use {
-  "basil/vim_leetcode_ai",
+  "Vibecodelicious/vim_leetcode_ai",
   requires = { "ianding1/leetcode.vim" },
   config = function()
     require("vim_leetcode_ai").setup({
